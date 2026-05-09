@@ -1,4 +1,4 @@
-import requests, json, re
+import requests, json, re, os
 
 # Сигналы токсичного стиля общения
 _TOXIC_SIGNALS = [
@@ -85,6 +85,9 @@ def build_system_prompt(profile: dict, username: str) -> str:
 5. Первые два сообщения — познакомься с человеком, пойми как он говорит
 6. Не читай лекции — веди диалог
 7. Главное: раскрой гениальность этого конкретного человека в том что он спрашивает
+8. НИКОГДА не выдумывай факты. Если не уверен — скажи прямо: "Не уверен, проверь это." Ложная уверенность хуже признанного незнания.
+9. Если пользователь поймал тебя на ошибке — не оправдывайся и не повторяй ошибку. Скажи: "Ты прав, я ошибся. Вот как на самом деле:" и дай точный ответ.
+10. По конкретным фактам (характеристики игр, числа, даты, имена) — если не знаешь точно, говори "не знаю точно" вместо угадывания.
 
 ЕСЛИ ЧЕЛОВЕК В КРИЗИСЕ (боль, отчаяние, мысли о том чтобы не жить):
 — Не прерывай разговор и не отказывайся говорить. Это самое важное правило.
@@ -142,15 +145,42 @@ TENGU КАК ПРОВОДНИК В РЕАЛЬНОСТЬ:
 
     return prompt
 
+def _load_env_key():
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    try:
+        with open(env_path) as f:
+            for line in f:
+                if line.startswith("ANTHROPIC_API_KEY="):
+                    return line.strip().split("=", 1)[1]
+    except Exception:
+        pass
+    return None
+
 def chat(messages: list, profile: dict, username: str) -> str:
-    # Автодетект токсичного стиля — включаем адаптивный режим
     if not profile.get("toxic_mode") and detect_toxic(messages):
         profile["toxic_mode"] = True
     system = build_system_prompt(profile, username)
-    ollama_messages = [{"role": "system", "content": system}]
-    for m in messages[-20:]:  # last 20 messages for context
-        ollama_messages.append({"role": m["role"], "content": m["content"]})
 
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or _load_env_key()
+
+    if api_key:
+        try:
+            import anthropic
+            client = anthropic.Anthropic(api_key=api_key)
+            claude_msgs = [{"role": m["role"], "content": m["content"]} for m in messages[-20:]]
+            resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=1024,
+                system=system,
+                messages=claude_msgs
+            )
+            return resp.content[0].text
+        except Exception as e:
+            return f"[TENGU временно недоступен: {e}]"
+
+    ollama_messages = [{"role": "system", "content": system}]
+    for m in messages[-20:]:
+        ollama_messages.append({"role": m["role"], "content": m["content"]})
     try:
         resp = requests.post(
             f"{OLLAMA_URL}/api/chat",
