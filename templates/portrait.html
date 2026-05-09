@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Эмоциональный портрет · TENGU</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.pt-page{min-height:100vh;background:radial-gradient(ellipse 100% 80% at 50% 0%, rgba(220,38,38,.08), transparent 60%), var(--bg);padding:24px 16px 80px;}
+.pt-wrap{max-width:680px;margin:0 auto;}
+.pt-back{display:inline-flex;align-items:center;gap:6px;color:var(--text3);font-size:13px;text-decoration:none;margin-bottom:24px;transition:color .15s;}
+.pt-back:hover{color:var(--text);}
+.pt-empty{text-align:center;padding:60px 20px;}
+.pt-empty-icon{font-size:48px;margin-bottom:16px;opacity:.5;}
+.pt-empty-title{font-size:22px;font-weight:800;margin-bottom:8px;color:var(--text);letter-spacing:-.02em;}
+.pt-empty-sub{font-size:14px;color:var(--text2);line-height:1.6;max-width:420px;margin:0 auto 24px;}
+.pt-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(220,38,38,.3);}
+.pt-btn:hover{background:var(--red2);transform:translateY(-1px);}
+.pt-btn:disabled{opacity:.5;cursor:wait;}
+
+.pt-card{background:linear-gradient(180deg, rgba(220,38,38,.06), transparent 40%), var(--bg2);border:1px solid var(--border);border-radius:24px;padding:36px 32px;position:relative;overflow:hidden;animation:fadeUp .4s ease;}
+.pt-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg, var(--accent-from,#dc2626), var(--accent-to,#ec4899));}
+.pt-tag{display:inline-block;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.16em;font-weight:700;margin-bottom:12px;}
+.pt-title{font-size:clamp(28px,5vw,40px);font-weight:900;letter-spacing:-.02em;margin-bottom:8px;line-height:1.1;}
+.pt-subtitle{font-size:15px;color:var(--text2);line-height:1.6;margin-bottom:28px;font-style:italic;}
+.pt-section{margin-bottom:24px;}
+.pt-section-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.pt-section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.pt-text{font-size:15px;line-height:1.7;color:var(--text);}
+.pt-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.pt-chip{padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:100px;font-size:13px;color:var(--text);font-weight:500;}
+.pt-chip-emo{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.3);color:#fca5a5;}
+.pt-chip-theme{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.3);color:#a5b4fc;}
+
+.pt-block{padding:18px 20px;background:var(--bg3);border-radius:14px;border-left:3px solid var(--accent-from,#dc2626);margin-bottom:14px;}
+.pt-block-help{border-left-color:#22c55e;background:rgba(34,197,94,.05);}
+.pt-block-strength{border-left-color:#3b82f6;background:rgba(59,130,246,.05);}
+.pt-block-weight{border-left-color:#f59e0b;background:rgba(245,158,11,.05);}
+.pt-block strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px;font-weight:700;}
+
+.pt-foot{display:flex;justify-content:space-between;align-items:center;margin-top:32px;padding-top:24px;border-top:1px solid var(--border);}
+.pt-date{font-size:12px;color:var(--text3);}
+.pt-actions{display:flex;gap:10px;}
+.pt-action{padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.pt-action:hover{border-color:var(--text3);color:var(--text);}
+
+.pt-loading{text-align:center;padding:60px 20px;color:var(--text2);}
+.pt-loading-dots{display:inline-flex;gap:4px;margin-bottom:14px;}
+.pt-loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--red);animation:bounce 1.4s infinite ease-in-out both;}
+.pt-loading-dots span:nth-child(1){animation-delay:-.32s;}
+.pt-loading-dots span:nth-child(2){animation-delay:-.16s;}
+@keyframes bounce{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+</style>
+</head>
+<body class="pt-page">
+<div class="pt-wrap">
+  <a href="/chat" class="pt-back">← Назад к диалогу</a>
+
+  <div id="ptContent">
+    {% if portrait %}
+    <div class="pt-card" style="--accent-from:{{ portrait.color or '#dc2626' }};--accent-to:#ec4899;">
+      <div class="pt-tag">Эмоциональный портрет · {{ username }}</div>
+      <div class="pt-title">{{ portrait.title }}</div>
+      <div class="pt-subtitle">{{ portrait.subtitle }}</div>
+
+      {% if portrait.emotions %}
+      <div class="pt-section">
+        <div class="pt-section-label">эмоции внутри</div>
+        <div class="pt-chips">
+          {% for e in portrait.emotions %}<span class="pt-chip pt-chip-emo">{{ e }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if portrait.themes %}
+      <div class="pt-section">
+        <div class="pt-section-label">темы которые звучат</div>
+        <div class="pt-chips">
+          {% for t in portrait.themes %}<span class="pt-chip pt-chip-theme">{{ t }}</span>{% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if portrait.strength %}
+      <div class="pt-block pt-block-strength">
+        <strong>Где твоя сила</strong>
+        <div class="pt-text">{{ portrait.strength }}</div>
+      </div>
+      {% endif %}
+
+      {% if portrait.weight %}
+      <div class="pt-block pt-block-weight">
+        <strong>Что давит</strong>
+        <div class="pt-text">{{ portrait.weight }}</div>
+      </div>
+      {% endif %}
+
+      {% if portrait.what_helps %}
+      <div class="pt-block pt-block-help">
+        <strong>Что могло бы дать передышку</strong>
+        <div class="pt-text">{{ portrait.what_helps }}</div>
+      </div>
+      {% endif %}
+
+      <div class="pt-foot">
+        <div class="pt-date">{% if portrait.generated_at %}составлен {{ portrait.generated_at[:10] }}{% endif %}</div>
+        <div class="pt-actions">
+          <button class="pt-action" onclick="regen()">↻ Обновить</button>
+          <button class="pt-action" onclick="share()">↗ Поделиться</button>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="pt-empty">
+      <div class="pt-empty-icon">🎭</div>
+      <div class="pt-empty-title">Твой эмоциональный портрет</div>
+      <div class="pt-empty-sub">
+        TENGU прочитает ваш диалог и нарисует кто ты сейчас.<br>
+        Не диагноз. Не совет. Просто зеркало — увидеть себя со стороны.
+      </div>
+      <button class="pt-btn" onclick="generate()" id="genBtn">Создать портрет</button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+async function generate() {
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.textContent = 'TENGU думает...';
+  document.getElementById('ptContent').innerHTML = `
+    <div class="pt-loading">
+      <div class="pt-loading-dots"><span></span><span></span><span></span></div>
+      <div>Читаю наш разговор и собираю портрет...</div>
+    </div>`;
+  try {
+    const r = await fetch('/portrait/generate', {method:'POST'});
+    const data = await r.json();
+    if (data.error) {
+      alert(data.error);
+      location.reload();
+      return;
+    }
+    location.reload();
+  } catch(e) {
+    alert('Ошибка. Попробуй ещё раз.');
+    location.reload();
+  }
+}
+async function regen() {
+  if (!confirm('Создать портрет заново?')) return;
+  await generate();
+}
+function share() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Мой эмоциональный портрет от TENGU',
+      text: document.querySelector('.pt-title').textContent + ' — ' + document.querySelector('.pt-subtitle').textContent,
+      url: location.href
+    });
+  } else {
+    navigator.clipboard.writeText(location.href);
+    alert('Ссылка скопирована');
+  }
+}
+</script>
+</body>
+</html>

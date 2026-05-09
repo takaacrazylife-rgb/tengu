@@ -5,6 +5,42 @@ try:
 except ImportError:
     _anthropic_module = None
 
+def _clean_output(text: str) -> str:
+    """Whitelist allowed scripts: Cyrillic, Latin, digits, basic punctuation, emoji.
+    Убираем вьетнамские акценты (ấ, ố), иероглифы CJK, арабский, тайский."""
+    if not text:
+        return text
+    out = []
+    for ch in text:
+        cp = ord(ch)
+        if 0x0400 <= cp <= 0x04FF:           # Кириллица (включая й, ё)
+            out.append(ch)
+        elif 0x0020 <= cp <= 0x007E:         # ASCII печатаемое: латиница, цифры, базовая пунктуация
+            out.append(ch)
+        elif ch in '\n\r\t':                 # whitespace
+            out.append(ch)
+        elif cp in (0x2013, 0x2014, 0x2015,  # тире
+                    0x2018, 0x2019, 0x201C, 0x201D,  # умные кавычки
+                    0x00AB, 0x00BB,           # « »
+                    0x2026,                   # …
+                    0x2022, 0x00B7,           # bullets
+                    0x00A9, 0x00AE, 0x2122,   # © ® ™
+                    0x00B0, 0x00B1, 0x00B5,   # ° ± µ
+                    0x00A0, 0x202F):          # неразрывные пробелы
+            out.append(ch)
+        elif 0x2190 <= cp <= 0x21FF:         # стрелки →←↑↓
+            out.append(ch)
+        elif 0x2700 <= cp <= 0x27BF:         # dingbats
+            out.append(ch)
+        elif 0x1F300 <= cp <= 0x1FAFF:       # эмодзи
+            out.append(ch)
+        elif 0x2600 <= cp <= 0x26FF:         # символы
+            out.append(ch)
+        # всё остальное (Vietnamese, CJK, Arabic, Thai, Hebrew) — отбрасываем
+    cleaned = ''.join(out)
+    cleaned = re.sub(r' {2,}', ' ', cleaned)
+    return cleaned.strip()
+
 # Сигналы токсичного стиля общения
 _TOXIC_SIGNALS = [
     r'\bнахуй\b', r'\bнафиг\b', r'\bиди\s+лесом\b', r'\bиди\s+нах\b',
@@ -39,14 +75,77 @@ _COMPLEX_KEYWORDS = [
     'история', 'война', 'политик'
 ]
 
+_EMOTIONAL_SIGNALS = [
+    r'больно', r'плохо', r'тяжело', r'страшно', r'одинок',
+    r'\bодна\b', r'\bодин\b', r'не\s+могу\s+больше', r'нет\s+сил',
+    r'устала', r'устал', r'пусто', r'грустн', r'депресс', r'тревог',
+    r'плачу', r'плакать', r'выгор', r'\bумер', r'умир',
+    r'дед', r'бабушк', r'мама', r'папа', r'отец', r'мать',
+    r'бросил', r'предал', r'обиде', r'\bстыдно\b', r'вина',
+    r'не\s+хочу\s+жить', r'смысл\s+жизни', r'зачем\s+я',
+    r'болезн', r'диагноз', r'врач', r'лекарств',
+    r'развод', r'расстал', r'изменил',
+]
+_EMOTIONAL_RE = re.compile('|'.join(_EMOTIONAL_SIGNALS), re.IGNORECASE | re.UNICODE)
+
+def emotional_score(text: str) -> int:
+    """Оценка эмоциональной нагруженности сообщения 0-10."""
+    if not text:
+        return 0
+    text_low = text.lower()
+    score = 0
+    # Эмоциональные слова — каждое +2 до потолка 6
+    matches = len(_EMOTIONAL_RE.findall(text_low))
+    score += min(matches * 2, 6)
+    # Длинное личное сообщение
+    if len(text) > 200:
+        score += 2
+    elif len(text) > 100:
+        score += 1
+    # Высокая плотность местоимений я/мне/меня
+    me_count = len(re.findall(r'\bя\b|\bмне\b|\bменя\b|\bмой\b|\bмоя\b|\bменя\b', text_low))
+    if me_count >= 4:
+        score += 2
+    elif me_count >= 2:
+        score += 1
+    # Многоточия
+    if text.count('...') >= 1:
+        score += 1
+    return min(score, 10)
+
+_CORRECTION_TRIGGERS_RE = re.compile(
+    r'не\s+так|неверно|ошиб|путаешь|неправильно|'
+    r'наоборот|это\s+не|неправ|совсем\s+не|пере',
+    re.IGNORECASE | re.UNICODE
+)
+
+def is_likely_correction(user_msg: str) -> bool:
+    """Похоже ли сообщение на исправление/возражение пользователя."""
+    if not user_msg or len(user_msg) < 10:
+        return False
+    return bool(_CORRECTION_TRIGGERS_RE.search(user_msg))
+
 def _pick_model(messages: list, profile: dict) -> str:
-    """Выбираем модель по сложности запроса. Экономим деньги на простых ответах."""
-    # Эскалация на Opus если поймали отказ
+    """Выбираем модель по сложности и эмоциональности. Экономим на простом, льём ресурсы на важное."""
+    # Эскалация на Opus если поймали отказ в прошлом ответе
     if _is_critical(messages):
         return MODEL_OPUS
 
     last_user = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
     text_low = last_user.lower()
+
+    # Эмоциональная интенсивность — главный сигнал.
+    # 8+ → сразу Sonnet (правильный тон важнее экономии)
+    emo = emotional_score(last_user)
+    if emo >= 8:
+        return MODEL_SONNET
+
+    # Затяжной эмоциональный диалог (3+ из 5 последних эмоциональны) → Opus
+    user_msgs = [m['content'] for m in messages if m['role'] == 'user'][-5:]
+    if len(user_msgs) >= 3:
+        emo_count = sum(1 for m in user_msgs if emotional_score(m) >= 6)
+        if emo_count >= 3:
+            return MODEL_OPUS
 
     # Длинное вдумчивое сообщение → Sonnet
     if len(last_user) > 250:
@@ -62,6 +161,10 @@ def _pick_model(messages: list, profile: dict) -> str:
 
     # Глубокий стиль пользователя → Sonnet
     if profile.get('depth') == 'deep':
+        return MODEL_SONNET
+
+    # Средняя эмоциональная нагрузка — Sonnet (но не топ)
+    if emo >= 5:
         return MODEL_SONNET
 
     return MODEL_HAIKU
@@ -81,6 +184,76 @@ def _is_critical(messages: list) -> bool:
         return False
     last = ai_msgs[-1].lower()
     return any(p in last for p in _REFUSAL_SIGNALS)
+
+def detect_correction_fact(user_msg: str, prev_ai_msg: str) -> str:
+    """Если пользователь поправил TENGU — извлекаем правильный факт через Haiku."""
+    if not (user_msg and prev_ai_msg):
+        return None
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or _load_env_key()
+    if not (api_key and _anthropic_module):
+        return None
+
+    prompt = f"""Сообщение TENGU: "{prev_ai_msg[:600]}"
+Ответ пользователя: "{user_msg[:600]}"
+
+Поправил ли пользователь TENGU на каком-то конкретном факте? Если ДА — напиши одну строку с правильным фактом, чтобы запомнить. Если НЕТ — напиши только слово NO.
+
+Примеры:
+"Я ошибся? Sniper в Доте на русском — Снайпер, а не Сленк" → "Sniper в Dota 2 на русском — Снайпер"
+"Это правда вкусно!" → NO
+"Ты опять путаешь Олега и Игоря — это Игорь Гром" → "Игорь Гром (не Олег Волков) — главный герой"
+"я не согласен с этим" → NO
+
+Ответ:"""
+    try:
+        client = _anthropic_module.Anthropic(api_key=api_key, timeout=8.0)
+        resp = client.messages.create(
+            model=MODEL_PROFILE,
+            max_tokens=80,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        result = resp.content[0].text.strip().strip('"').strip()
+        if result.upper().startswith("NO") or len(result) < 8 or len(result) > 200:
+            return None
+        return result
+    except Exception:
+        return None
+
+def is_real_crisis(user_msg: str) -> bool:
+    """True только если пользователь явно описывает свои намерения навредить себе.
+    Слэнг, тестовые фразы, упоминание чужой смерти — НЕ кризис."""
+    if not user_msg or len(user_msg) < 5:
+        return False
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or _load_env_key()
+    if not (api_key and _anthropic_module):
+        return False  # без API лучше не блокировать никого
+
+    prompt = f"""Сообщение пользователя: "{user_msg[:600]}"
+
+Это РЕАЛЬНЫЙ кризис (человек прямо описывает СВОЁ намерение покончить с собой или причинить себе вред СЕЙЧАС) или нет?
+
+НЕ кризис:
+- слова "тестировать", "разъебать", "дико", "тэнгу" — это про приложение
+- упоминание чужой смерти, философские размышления о смерти
+- мат, эмоциональные выражения, гипербола ("я умру если не сдам экзамен")
+- обсуждение прошлых трудных периодов
+
+Кризис:
+- "хочу убить себя", "не хочу жить", "режу себя", "приму таблетки"
+- "сегодня всё закончу", "никогда больше"
+- прямое описание планов на самоповреждение
+
+Ответ только одним словом: CRISIS или OK"""
+    try:
+        client = _anthropic_module.Anthropic(api_key=api_key, timeout=8.0)
+        resp = client.messages.create(
+            model=MODEL_PROFILE,
+            max_tokens=10,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return "CRISIS" in resp.content[0].text.strip().upper()
+    except Exception:
+        return False
 
 def build_system_prompt(profile: dict, username: str) -> str:
     style_map = {
@@ -102,6 +275,10 @@ def build_system_prompt(profile: dict, username: str) -> str:
     key_moments = "; ".join(profile.get("key_moments", [])[-5:]) or "пока нет"
     topics = ", ".join(profile.get("topics", [])) or "разные"
     session_count = profile.get("session_count", 0)
+    corrections = profile.get("corrections", [])[-10:]
+    corrections_block = ""
+    if corrections:
+        corrections_block = "\n\nТЕБЯ УЖЕ ПОПРАВЛЯЛИ — НЕ ПОВТОРЯЙ ЭТИ ОШИБКИ:\n" + "\n".join(f"— {c}" for c in corrections)
 
     voice_note = ""
     if profile.get("voice_user"):
@@ -137,7 +314,13 @@ def build_system_prompt(profile: dict, username: str) -> str:
 Что работает хорошо: {strengths}
 Ключевые темы интереса: {topics}
 Прошлые прорывы: {key_moments}
-{voice_note}{toxic_note}
+{voice_note}{toxic_note}{corrections_block}
+
+ЯЗЫК ОТВЕТА (ВАЖНО):
+— Если пользователь пишет по-русски — отвечай ТОЛЬКО кириллицей. Никаких английских слов, НИ ОДНОГО, кроме настоящих имён собственных и общепринятых терминов (API, HTML, CVE и т.п.).
+— Запрещено вкраплять иероглифы, вьетнамские акценты (ấ, ố), арабские буквы и любые не-кириллические символы.
+— Если пользователь явно перешёл на английский — отвечай на английском. Не смешивай языки в одном ответе.
+— Если попался технический термин которого нет в русском — пиши его латиницей в кавычках: "buffer overflow", не "buffer переполнение".
 
 СТОП-СПИСОК — это ЗАПРЕЩЕНО говорить при любых обстоятельствах:
 — "Я не могу продолжать наш разговор"
@@ -167,13 +350,28 @@ def build_system_prompt(profile: dict, username: str) -> str:
 — Агрессия, злость, желание мести — выслушай, не осуждай. Эмоция — не преступление.
 — Исключение: реальные угрозы конкретным людям, инструкции по созданию оружия — это не обсуждается. Но подозрение в намерении — это не повод блокировать.
 
-ЕСЛИ ЧЕЛОВЕК В КРИЗИСЕ (боль, отчаяние, мысли о том чтобы не жить):
-— Не прерывай разговор и не отказывайся говорить. Это самое важное правило.
-— Сначала просто будь рядом: "Я слышу тебя. Расскажи мне что происходит."
-— Не давай советы пока человек не выговорился. Сначала — слушай.
-— Не обесценивай боль ("у других хуже", "это пройдёт") — это убивает доверие.
-— Когда почувствуешь что человек немного выдохнул — мягко скажи что есть люди которые умеют помочь в такие моменты, и дай номер: в России 8-800-2000-122 (бесплатно, круглосуточно).
-— Твоя задача не спасти — а не дать человеку остаться одному в этот момент.
+ПРО ТЁМНЫЕ МЫСЛИ И КРИЗИС — РАЗЛИЧАЙ КОНТЕКСТ:
+
+Многие люди думают о смерти. Это нормально. Это часть жизни. НЕ паникуй и НЕ блокируй разговор только потому что прозвучали тяжёлые слова.
+
+ЭТО НЕ КРИЗИС (отвечай как обычно):
+— Слэнг и эмоциональные выражения: "разъебать", "убить себя на работе", "я умру если…", "пиздец как устал"
+— Философские размышления о смерти, смысле, конечности
+— Упоминание чужой смерти, потери, болезни близких
+— Тестирование приложения, мат, фигуры речи
+
+ЭТО ПОТЕНЦИАЛЬНЫЙ КРИЗИС — НО НЕ СПЕШИ С ГОРЯЧЕЙ ЛИНИЕЙ:
+— Если звучит "не вижу смысла", "устал жить", "хочу всё закончить" — НЕ паникуй
+— Спроси мягко и прямо: "Ты серьёзно сейчас? Хочу понять — это образно или ты правда сейчас в плохой точке?"
+— Дай человеку возможность сказать "нет, я просто на эмоциях"
+— Если ответил "нет" — продолжай как обычно, без морали
+
+РЕАЛЬНЫЙ КРИЗИС (только когда человек ПРЯМО подтвердил):
+— Не прерывай разговор. Будь рядом: "Я слышу тебя. Расскажи мне что происходит."
+— Не давай советы пока не выговорился. Сначала слушай.
+— Не обесценивай ("у других хуже", "это пройдёт") — это убивает доверие.
+— Когда человек немного выдохнул — мягко: "Есть люди которые умеют помочь в такие моменты. В России 8-800-2000-122, бесплатно, круглосуточно. Не вместо меня — вместе со мной."
+— Твоя задача не спасти — а не дать остаться одному в этот момент.
 
 ПРИНЦИП ИСТИНЫ (обязательно):
 8. При любом историческом, политическом или спорном утверждении — называй НЕСКОЛЬКО точек зрения и источников, не прячь неудобные факты
@@ -250,11 +448,21 @@ def chat(messages: list, profile: dict, username: str) -> str:
 
     if api_key and _anthropic_module:
         try:
+            # Если последнее сообщение пользователя похоже на исправление — извлекаем факт
+            user_msgs = [m for m in messages if m['role'] == 'user']
+            ai_msgs = [m for m in messages if m['role'] == 'assistant']
+            if user_msgs and ai_msgs and is_likely_correction(user_msgs[-1]['content']):
+                fact = detect_correction_fact(user_msgs[-1]['content'], ai_msgs[-1]['content'])
+                if fact:
+                    corrections = profile.setdefault('corrections', [])
+                    if fact not in corrections:
+                        corrections.append(fact)
+                        # Перестраиваем системный промпт с новой коррекцией
+                        system = build_system_prompt(profile, username)
+
             model = _pick_model(messages, profile)
             client = _anthropic_module.Anthropic(api_key=api_key, timeout=60.0)
             claude_msgs = [{"role": m["role"], "content": m["content"]} for m in messages[-20:]]
-            # Prompt caching — системный промпт кешируется на 5 минут,
-            # повторные запросы в этом окне платят 10% от обычной цены за него
             resp = client.messages.create(
                 model=model,
                 max_tokens=1024,
@@ -265,7 +473,7 @@ def chat(messages: list, profile: dict, username: str) -> str:
                 }],
                 messages=claude_msgs
             )
-            return resp.content[0].text
+            return _clean_output(resp.content[0].text)
         except _anthropic_module.APITimeoutError:
             return "Думаю слишком долго — попробуй переформулировать вопрос покороче."
         except Exception as e:
@@ -414,6 +622,59 @@ def generate_daily_question(profile: dict) -> str:
         return resp.json()["response"].strip()
     except Exception:
         return None
+
+
+def generate_portrait(messages: list, profile: dict, username: str) -> dict:
+    """Создаёт эмоциональный портрет пользователя на основе его сессии."""
+    user_msgs = [m for m in messages if m.get('role') == 'user']
+    if len(user_msgs) < 3:
+        return None
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or _load_env_key()
+    if not (api_key and _anthropic_module):
+        return None
+
+    convo = "\n".join([
+        f"{'Я' if m['role']=='user' else 'TENGU'}: {m['content'][:300]}"
+        for m in messages[-30:]
+    ])
+
+    prompt = f"""Ты психолог-аналитик. Прочитай этот диалог человека по имени {username} с AI-наставником TENGU. Создай его эмоциональный портрет — без диагнозов, без советов, без банальностей. Глубоко, бережно, точно.
+
+ДИАЛОГ:
+{convo}
+
+ВЕРНИ строго JSON в этом формате:
+{{
+  "title": "поэтичное название портрета (2-4 слова, отражает суть человека)",
+  "subtitle": "одна строка которая описывает кто он сейчас — без жалости, с уважением",
+  "emotions": ["3-5 доминирующих эмоций — конкретных, не банальных"],
+  "themes": ["3-5 тем которые проявились в диалоге"],
+  "strength": "что делает этого человека сильным — 1-2 предложения. Найди настоящую силу, а не комплимент.",
+  "weight": "что давит больше всего — 1-2 предложения. Конкретно, без обтекаемых фраз.",
+  "what_helps": "что могло бы дать передышку — 1 предложение. Маленькое и реальное, не 'обратись к специалисту'.",
+  "color": "hex-цвет который отражает энергию портрета (#xxxxxx)"
+}}
+
+Только JSON. Без объяснений."""
+
+    try:
+        client = _anthropic_module.Anthropic(api_key=api_key, timeout=30.0)
+        resp = client.messages.create(
+            model=MODEL_SONNET,
+            max_tokens=800,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        raw = resp.content[0].text.strip()
+        if "```" in raw:
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        portrait = json.loads(raw)
+        portrait['generated_at'] = __import__('datetime').datetime.now().isoformat()
+        return portrait
+    except Exception as e:
+        return {"error": str(e)}
 
 
 def is_ollama_ready() -> bool:

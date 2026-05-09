@@ -4,7 +4,7 @@ import json, threading
 from datetime import datetime, timedelta
 from database import init_db, get_or_create_user, get_profile, save_profile
 from database import get_active_session, create_session, get_session_messages, append_message, end_session, all_users
-from llm import chat, extract_profile_update, is_ollama_ready, build_opening_message, generate_daily_question
+from llm import chat, extract_profile_update, is_ollama_ready, build_opening_message, generate_daily_question, generate_portrait
 
 app = Flask(__name__)
 app.secret_key = 'nexus-local-secret-2026'
@@ -219,6 +219,40 @@ def admin():
         except Exception:
             u['profile'] = {}
     return render_template('admin.html', users=users)
+
+# ── PORTRAIT ─────────────────────────────────────────────────────────────────
+
+@app.route('/portrait')
+def portrait_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    profile = get_profile(session['user_id'])
+    portrait = profile.get('portrait')
+    return render_template('portrait.html',
+        username=session['username'],
+        portrait=portrait
+    )
+
+@app.route('/portrait/generate', methods=['POST'])
+def portrait_generate():
+    if 'user_id' not in session:
+        return jsonify({'error': 'not logged in'}), 401
+    user_id = session['user_id']
+    session_id = session.get('session_id')
+    if not session_id:
+        active = get_active_session(user_id)
+        if active:
+            session_id = active['id']
+    if not session_id:
+        return jsonify({'error': 'no session'}), 400
+    messages = get_session_messages(session_id)
+    profile = get_profile(user_id)
+    portrait = generate_portrait(messages, profile, session['username'])
+    if not portrait or portrait.get('error'):
+        return jsonify({'error': (portrait or {}).get('error') or 'Нужно минимум 3 сообщения для портрета'}), 400
+    profile['portrait'] = portrait
+    save_profile(user_id, profile)
+    return jsonify(portrait)
 
 # ── PITCH ────────────────────────────────────────────────
 
