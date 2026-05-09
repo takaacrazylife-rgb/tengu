@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify, Response
+from flask_compress import Compress
 import json, threading
 from datetime import datetime, timedelta
 from database import init_db, get_or_create_user, get_profile, save_profile
@@ -7,6 +8,15 @@ from llm import chat, extract_profile_update, is_ollama_ready, build_opening_mes
 
 app = Flask(__name__)
 app.secret_key = 'nexus-local-secret-2026'
+
+# gzip — критично для пользователей через VPN, экономит ~75% трафика
+Compress(app)
+
+# Кеш статики на 1 день в браузере
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 86400
+
+# Сколько сообщений показывать при загрузке страницы (остальные подгружаются скроллом)
+INITIAL_MESSAGES_LIMIT = 30
 
 init_db()
 
@@ -59,13 +69,18 @@ def chat_page():
         session_id = active['id']
     session['session_id'] = session_id
 
-    messages = get_session_messages(session_id)
+    all_messages = get_session_messages(session_id)
 
     # Первое сообщение от TENGU — снимает барьер страха
-    if not messages:
+    if not all_messages:
         opening = build_opening_message(username, profile)
         append_message(session_id, 'assistant', opening)
-        messages = get_session_messages(session_id)
+        all_messages = get_session_messages(session_id)
+
+    # Рендерим только последние N сообщений — старые подгружаются по запросу
+    total_messages = len(all_messages)
+    messages = all_messages[-INITIAL_MESSAGES_LIMIT:]
+    has_older = total_messages > INITIAL_MESSAGES_LIMIT
 
     # Ежедневный вопрос — если прошло 20+ часов с последнего визита
     daily_q = None
@@ -90,8 +105,27 @@ def chat_page():
         profile=profile,
         model_ready=model_ready,
         session_count=profile.get('session_count', 0),
-        daily_q=daily_q
+        daily_q=daily_q,
+        has_older=has_older,
+        total_messages=total_messages
     )
+
+@app.route('/messages/older')
+def older_messages():
+    if 'user_id' not in session:
+        return jsonify({'error': 'not logged in'}), 401
+    session_id = session.get('session_id')
+    if not session_id:
+        return jsonify({'messages': []})
+    before = int(request.args.get('before', INITIAL_MESSAGES_LIMIT))
+    limit = 30
+    all_messages = get_session_messages(session_id)
+    end = max(0, len(all_messages) - before)
+    start = max(0, end - limit)
+    return jsonify({
+        'messages': all_messages[start:end],
+        'has_older': start > 0
+    })
 
 @app.route('/send', methods=['POST'])
 def send_message():
