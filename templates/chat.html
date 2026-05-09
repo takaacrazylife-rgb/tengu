@@ -248,26 +248,42 @@ async function sendMessage() {
   isLoading = true;
   input.value = '';
   input.style.height = 'auto';
-  document.getElementById('sendBtn').disabled = true;
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
   const welcome = document.querySelector('.welcome-block');
   if (welcome) welcome.remove();
   appendMessage('user', text);
   typing.classList.remove('hidden');
   scrollBottom();
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
+
   try {
     const resp = await fetch('/send', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({message: text})
+      body: JSON.stringify({message: text}),
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
     const data = await resp.json();
     typing.classList.add('hidden');
     appendMessage('assistant', data.reply || data.error || '...');
   } catch(e) {
+    clearTimeout(timeoutId);
     typing.classList.add('hidden');
-    appendMessage('assistant', 'Ошибка соединения. Попробуй ещё раз.');
+    if (e.name === 'AbortError') {
+      appendMessage('assistant', 'TENGU думает слишком долго. Попробуй задать вопрос покороче или повтори.');
+    } else {
+      appendMessage('assistant', 'Ошибка соединения. Попробуй ещё раз.');
+    }
+    // Восстанавливаем текст чтобы можно было повторить
+    input.value = text;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
   }
   isLoading = false;
-  document.getElementById('sendBtn').disabled = false;
+  sendBtn.disabled = false;
   input.focus();
 }
 
