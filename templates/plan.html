@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU — План изменения мира</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+:root {
+  --bg:#0a0b10; --bg2:#12141f; --bg3:#1a1d2e;
+  --red:#dc2626; --red2:#991b1b; --indigo:#6366f1;
+  --blue:#4f7ef8; --green:#10b981; --gold:#f59e0b;
+  --text:#eef0f8; --text2:#8b90aa; --text3:#4b506b;
+  --border:rgba(255,255,255,0.07);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+
+/* PRINT */
+@media print {
+  body{background:#fff;color:#000;}
+  .no-print{display:none!important;}
+  .phase{break-inside:avoid-page;}
+  .phase-header{background:#1a1d2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  a{color:inherit!important;}
+}
+
+/* TOP BAR */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,11,16,.95);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 24px; no-print;
+}
+.topbar-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.topbar-title{font-size:17px;font-weight:800;color:var(--text);}
+.topbar-sub{font-size:12px;color:var(--text3);}
+.topbar-right{display:flex;gap:8px;}
+.btn-pdf{
+  padding:8px 20px;background:var(--red);color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+  box-shadow:0 2px 12px rgba(220,38,38,.3);
+}
+.btn-pdf:hover{background:var(--red2);transform:translateY(-1px);}
+.btn-back{
+  padding:8px 16px;background:var(--bg3);color:var(--text2);
+  border:1px solid var(--border);border-radius:8px;
+  font-size:13px;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;
+}
+.btn-back:hover{color:var(--text);}
+
+/* HERO */
+.hero{
+  text-align:center;padding:56px 24px 48px;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(220,38,38,.12),transparent 60%);
+  border-bottom:1px solid var(--border);
+}
+.hero-mask{
+  width:80px;height:80px;background:#0a0b10;
+  border:2px solid rgba(220,38,38,.3);
+  border-radius:20px;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 48px rgba(220,38,38,.25);
+}
+.hero-title{font-size:clamp(26px,4vw,42px);font-weight:900;letter-spacing:-.03em;margin-bottom:8px;}
+.hero-title span{color:var(--red);}
+.hero-sub{font-size:16px;color:var(--text2);max-width:580px;margin:0 auto 24px;line-height:1.7;}
+.hero-stats{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;}
+.stat{text-align:center;}
+.stat-n{font-size:28px;font-weight:900;color:var(--red);}
+.stat-l{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+
+/* BODY */
+.body{max-width:900px;margin:0 auto;padding:40px 24px 80px;}
+
+/* PHASE */
+.phase{margin-bottom:40px;}
+.phase-header{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 20px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:14px 14px 0 0;
+  border-bottom:2px solid var(--red);
+}
+.phase-num{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--red);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;flex-shrink:0;
+}
+.phase-title{font-size:18px;font-weight:800;}
+.phase-sub{font-size:13px;color:var(--text3);margin-top:1px;}
+.phase-tag{
+  margin-left:auto;padding:3px 12px;
+  border-radius:100px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;
+}
+.tag-now{background:rgba(220,38,38,.15);color:var(--red);border:1px solid rgba(220,38,38,.3);}
+.tag-week{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.25);}
+.tag-month{background:rgba(99,102,241,.12);color:var(--indigo);border:1px solid rgba(99,102,241,.25);}
+.tag-later{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.tag-forever{background:rgba(79,126,248,.1);color:var(--blue);border:1px solid rgba(79,126,248,.2);}
+
+/* TASKS */
+.tasks{
+  background:var(--bg2);border:1px solid var(--border);
+  border-top:none;border-radius:0 0 14px 14px;overflow:hidden;
+}
+.task{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:12px 20px;border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.task:last-child{border-bottom:none;}
+.task:hover{background:rgba(255,255,255,.02);}
+.task-n{
+  min-width:28px;height:28px;border-radius:7px;
+  background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--text3);
+  flex-shrink:0;margin-top:1px;
+}
+.task-content{}
+.task-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.task-desc{font-size:12px;color:var(--text3);line-height:1.5;}
+.task-badge{
+  margin-left:auto;padding:2px 9px;border-radius:100px;
+  font-size:10px;font-weight:700;letter-spacing:.06em;
+  flex-shrink:0;margin-top:3px;white-space:nowrap;
+}
+.b-critical{background:rgba(220,38,38,.15);color:#f87171;border:1px solid rgba(220,38,38,.2);}
+.b-important{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.2);}
+.b-nice{background:rgba(99,102,241,.1);color:#a5b4fc;border:1px solid rgba(99,102,241,.15);}
+.b-vision{background:rgba(16,185,129,.08);color:#6ee7b7;border:1px solid rgba(16,185,129,.15);}
+
+/* MANIFESTO at bottom */
+.manifesto-section{
+  margin-top:48px;padding:36px;
+  background:var(--bg2);border:1px solid rgba(220,38,38,.2);
+  border-radius:16px;text-align:center;
+}
+.manifesto-section h2{font-size:24px;font-weight:900;margin-bottom:16px;}
+.manifesto-section p{font-size:15px;color:var(--text2);line-height:1.85;max-width:600px;margin:0 auto 14px;}
+.manifesto-section p:last-child{margin:0;}
+.manifesto-section strong{color:var(--text);}
+.big-slogan{
+  font-size:clamp(18px,3vw,26px);font-weight:900;
+  color:var(--text);margin:24px 0 8px;letter-spacing:-.01em;
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar no-print">
+  <a href="/" class="topbar-logo">
+    <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+      <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+      <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+      <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="topbar-title">TENGU</div>
+      <div class="topbar-sub">План изменения мира</div>
+    </div>
+  </a>
+  <div class="topbar-right">
+    <a href="/" class="btn-back">← Назад</a>
+    <button class="btn-pdf" onclick="window.print()">⬇ Сохранить PDF</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-mask">
+    <svg width="44" height="44" viewBox="0 0 32 32" fill="none">
+      <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+      <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+      <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M12 20.5 Q16 22 20 20.5" stroke="#991b1b" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="hero-title">Как изменить <span>мир</span> через знание.</div>
+  <div class="hero-sub">
+    Полный план от первого шага до "бесплатно для каждого человека на Земле навсегда".
+    Один пункт — одно действие. Мы пройдём каждый.
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-n">7</div><div class="stat-l">Фаз</div></div>
+    <div class="stat"><div class="stat-n">110</div><div class="stat-l">Действий</div></div>
+    <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Результат</div></div>
+  </div>
+</section>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- PHASE 0 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">0</div>
+    <div>
+      <div class="phase-title">Фундамент — Прямо сейчас</div>
+      <div class="phase-sub">Всё что нужно сделать до запуска краудфандинга</div>
+    </div>
+    <span class="phase-tag tag-now">Сейчас</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">1</div><div class="task-content"><div class="task-title">✅ Приложение написано и работает</div><div class="task-desc">TENGU на Flask + Ollama, порт 7070, голосовой ввод, память профиля</div></div><span class="task-badge b-critical">ГОТОВО</span></div>
+    <div class="task"><div class="task-n">2</div><div class="task-content"><div class="task-title">✅ Брендинг TENGU завершён</div><div class="task-desc">Маска Тэнгу SVG, тёмный дизайн, страница /pitch</div></div><span class="task-badge b-critical">ГОТОВО</span></div>
+    <div class="task"><div class="task-n">3</div><div class="task-content"><div class="task-title">Записать демо-видео (60–90 сек)</div><div class="task-desc">Cmd+Shift+5 → запись экрана. Показать: вход, первое сообщение, голос, ответ AI</div></div><span class="task-badge b-critical">СРОЧНО</span></div>
+    <div class="task"><div class="task-n">4</div><div class="task-content"><div class="task-title">Сделать 5–7 скриншотов приложения</div><div class="task-desc">Экран входа, чат, профиль, страница pitch — для галереи краудфандинга</div></div><span class="task-badge b-critical">СРОЧНО</span></div>
+    <div class="task"><div class="task-n">5</div><div class="task-content"><div class="task-title">Создать email проекта</div><div class="task-desc">tengu.ai@gmail.com или hello@tengu.app — для регистрации на платформах</div></div><span class="task-badge b-important">ВАЖНО</span></div>
+    <div class="task"><div class="task-n">6</div><div class="task-content"><div class="task-title">Создать GitHub репозиторий</div><div class="task-desc">github.com/takaacrazylife-rgb/tengu-ai — public. Доверие через открытый код</div></div><span class="task-badge b-important">ВАЖНО</span></div>
+    <div class="task"><div class="task-n">7</div><div class="task-content"><div class="task-title">Написать README.md на GitHub</div><div class="task-desc">Что такое TENGU, как запустить, философия, ссылка на краудфандинг</div></div><span class="task-badge b-important">ВАЖНО</span></div>
+    <div class="task"><div class="task-n">8</div><div class="task-content"><div class="task-title">Загрузить код на GitHub</div><div class="task-desc">git init, git add, git commit, gh repo create, git push</div></div><span class="task-badge b-important">ВАЖНО</span></div>
+    <div class="task"><div class="task-n">9</div><div class="task-content"><div class="task-title">Создать баннер/обложку 1200×630px</div><div class="task-desc">Маска Тэнгу + слоган. Нужна для OG-превью и краудфандинга. Canva / Figma</div></div><span class="task-badge b-important">ВАЖНО</span></div>
+    <div class="task"><div class="task-n">10</div><div class="task-content"><div class="task-title">Написать elevator pitch (2 предложения)</div><div class="task-desc">"TENGU — это персональный AI-наставник, бесплатный навсегда. Пока ChatGPT берёт $20/мес — мы не берём ничего."</div></div><span class="task-badge b-important">ВАЖНО</span></div>
+  </div>
+</div>
+
+<!-- PHASE 1 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">1</div>
+    <div>
+      <div class="phase-title">Краудфандинг — Запуск</div>
+      <div class="phase-sub">Выбрать платформу и опубликовать кампанию</div>
+    </div>
+    <span class="phase-tag tag-week">1–2 недели</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">11</div><div class="task-content"><div class="task-title">Выбрать платформу краудфандинга</div><div class="task-desc">Kickstarter (глобал, строгий) / Indiegogo (гибкий, глобал) / Planeta.ru (русский) — рекомендую Indiegogo: нет минимума, деньги даже если цель не достигнута</div></div><span class="task-badge b-critical">ШАГ 1</span></div>
+    <div class="task"><div class="task-n">12</div><div class="task-content"><div class="task-title">Зарегистрироваться на платформе</div><div class="task-desc">Email + верификация личности + банковский счёт для вывода средств</div></div><span class="task-badge b-critical">ШАГ 2</span></div>
+    <div class="task"><div class="task-n">13</div><div class="task-content"><div class="task-title">Заполнить: заголовок кампании</div><div class="task-desc">"TENGU — бесплатный AI-наставник для каждого. Навсегда."</div></div><span class="task-badge b-critical">ШАГ 3</span></div>
+    <div class="task"><div class="task-n">14</div><div class="task-content"><div class="task-title">Заполнить: краткое описание (blurb)</div><div class="task-desc">Текст с /pitch уже готов — скопировать и адаптировать под лимит символов</div></div><span class="task-badge b-critical">ШАГ 4</span></div>
+    <div class="task"><div class="task-n">15</div><div class="task-content"><div class="task-title">Заполнить: полная история проекта</div><div class="task-desc">Уже написано на /pitch — скопировать секции "Миссия", "Проблема", "Решение", "Остров знаний"</div></div><span class="task-badge b-critical">ШАГ 5</span></div>
+    <div class="task"><div class="task-n">16</div><div class="task-content"><div class="task-title">Установить цель сбора</div><div class="task-desc">Минимальная цель: $5,000 (6 мес. серверов для 1000 пользователей). Stretch goals: $20K, $50K, $200K</div></div><span class="task-badge b-critical">ШАГ 6</span></div>
+    <div class="task"><div class="task-n">17</div><div class="task-content"><div class="task-title">Создать уровни вознаграждений</div><div class="task-desc">$5 = "Последователь Тэнгу" (имя в благодарностях) / $25 = "Ученик" (ранний доступ) / $100 = "Самурай" (имя в приложении) / $500 = "Мастер" (встреча-звонок)</div></div><span class="task-badge b-important">ШАГ 7</span></div>
+    <div class="task"><div class="task-n">18</div><div class="task-content"><div class="task-title">Загрузить демо-видео</div><div class="task-desc">Главный фактор конверсии. Видео в первые 30 сек должно показать: проблему, решение, эмоцию</div></div><span class="task-badge b-critical">ШАГ 8</span></div>
+    <div class="task"><div class="task-n">19</div><div class="task-content"><div class="task-title">Загрузить скриншоты и баннер</div><div class="task-desc">5–7 изображений: обложка, экран входа, чат, маска Тэнгу крупно, сравнение с конкурентами</div></div><span class="task-badge b-important">ШАГ 9</span></div>
+    <div class="task"><div class="task-n">20</div><div class="task-content"><div class="task-title">Заполнить раздел "О команде"</div><div class="task-desc">Честно: 1 человек + AI. "Мы не стартап — мы просто люди с большой идеей."</div></div><span class="task-badge b-important">ШАГ 10</span></div>
+    <div class="task"><div class="task-n">21</div><div class="task-content"><div class="task-title">Детальный бюджет для платформы</div><div class="task-desc">Сервер RunPod A100 ~$800/мес × 6 = $4,800. Домен $15/год. CDN $50. Buffer $135. Итого $5,000</div></div><span class="task-badge b-important">ШАГ 11</span></div>
+    <div class="task"><div class="task-n">22</div><div class="task-content"><div class="task-title">Установить срок кампании</div><div class="task-desc">30 дней оптимально. Не больше — теряет импульс. Старт в понедельник утром.</div></div><span class="task-badge b-important">ШАГ 12</span></div>
+    <div class="task"><div class="task-n">23</div><div class="task-content"><div class="task-title">Финальный просмотр страницы</div><div class="task-desc">Прочитать как чужой человек. Понятно ли за 10 секунд что это и зачем поддержать?</div></div><span class="task-badge b-critical">ШАГ 13</span></div>
+    <div class="task"><div class="task-n">24</div><div class="task-content"><div class="task-title">🚀 ЗАПУСТИТЬ КАМПАНИЮ</div><div class="task-desc">Нажать "Launch". Мир должен узнать о TENGU.</div></div><span class="task-badge b-critical">ДЕНЬ X</span></div>
+  </div>
+</div>
+
+<!-- PHASE 2 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">2</div>
+    <div>
+      <div class="phase-title">Распространение — Во время кампании</div>
+      <div class="phase-sub">Рассказать миру. Каждый день важен.</div>
+    </div>
+    <span class="phase-tag tag-week">30 дней</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">25</div><div class="task-content"><div class="task-title">Создать Telegram-канал @tengu_ai</div><div class="task-desc">Первый пост — день запуска. Ежедневные обновления по сбору.</div></div><span class="task-badge b-critical">ДЕНЬ 1</span></div>
+    <div class="task"><div class="task-n">26</div><div class="task-content"><div class="task-title">Написать всем друзьям и знакомым лично</div><div class="task-desc">Не рассылка — личное сообщение. "Братик, я запустил кое-что важное, посмотришь?"</div></div><span class="task-badge b-critical">ДЕНЬ 1</span></div>
+    <div class="task"><div class="task-n">27</div><div class="task-content"><div class="task-title">Опубликовать на ProductHunt</div><div class="task-desc">producthunt.com — крупнейшее сообщество для запуска продуктов. Выбери день вторник.</div></div><span class="task-badge b-critical">ДЕНЬ 2</span></div>
+    <div class="task"><div class="task-n">28</div><div class="task-content"><div class="task-title">Пост на Hacker News: "Show HN: TENGU"</div><div class="task-desc">"Show HN: I built a free AI tutor that will always be free" — честно, без хайпа. HN любит искренность.</div></div><span class="task-badge b-critical">ДЕНЬ 2</span></div>
+    <div class="task"><div class="task-n">29</div><div class="task-content"><div class="task-title">Reddit: r/artificial, r/MachineLearning, r/opensource</div><div class="task-desc">Рассказать историю — не рекламу. "Я сделал бесплатный AI потому что..."</div></div><span class="task-badge b-important">ДЕНЬ 3</span></div>
+    <div class="task"><div class="task-n">30</div><div class="task-content"><div class="task-title">Создать Twitter/X @tengu_ai</div><div class="task-desc">Пост-тред: история проекта в 10 твитах. Маска Тэнгу как аватар.</div></div><span class="task-badge b-important">ДЕНЬ 3</span></div>
+    <div class="task"><div class="task-n">31</div><div class="task-content"><div class="task-title">TikTok / Instagram Reels</div><div class="task-desc">60 сек: "Пока ChatGPT берёт $20 в месяц — я сделал это бесплатным навсегда. Вот как." Показать экран.</div></div><span class="task-badge b-important">ДЕНЬ 3–5</span></div>
+    <div class="task"><div class="task-n">32</div><div class="task-content"><div class="task-title">Написать в IT-Telegram сообщества</div><div class="task-desc">Чаты разработчиков, AI-сообщества, студенческие чаты. "Не реклама — показываю что сделал"</div></div><span class="task-badge b-important">НЕДЕЛЯ 1</span></div>
+    <div class="task"><div class="task-n">33</div><div class="task-content"><div class="task-title">Написать 3–5 блогерам/журналистам об AI</div><div class="task-desc">Кратко: "Сделал бесплатный AI, хочу показать вам первым." Прикрепи ссылку и видео.</div></div><span class="task-badge b-important">НЕДЕЛЯ 1</span></div>
+    <div class="task"><div class="task-n">34</div><div class="task-content"><div class="task-title">Создать Discord сервер TENGU</div><div class="task-desc">Каналы: #объявления, #идеи, #баги, #успехи-пользователей. Сообщество строится с первого дня.</div></div><span class="task-badge b-nice">НЕДЕЛЯ 2</span></div>
+    <div class="task"><div class="task-n">35</div><div class="task-content"><div class="task-title">Ежедневный отчёт в Telegram-канале</div><div class="task-desc">"День 7: собрано $340 из $5000. Вот что произошло сегодня..." Прозрачность = доверие.</div></div><span class="task-badge b-important">КАЖДЫЙ ДЕНЬ</span></div>
+    <div class="task"><div class="task-n">36</div><div class="task-content"><div class="task-title">AMA (Ask Me Anything) в середине кампании</div><div class="task-desc">День 15: прямой эфир или тред в Telegram. Отвечать на любые вопросы честно.</div></div><span class="task-badge b-important">ДЕНЬ 15</span></div>
+    <div class="task"><div class="task-n">37</div><div class="task-content"><div class="task-title">Добавить ссылку на краудфандинг в приложение</div><div class="task-desc">Кнопка "Поддержать проект" на странице /pitch → ссылка на кампанию.</div></div><span class="task-badge b-important">ДЕНЬ 1</span></div>
+    <div class="task"><div class="task-n">38</div><div class="task-content"><div class="task-title">Финальный спринт — последние 48 часов</div><div class="task-desc">"Остался 2 дня! Нам нужно ещё $X." Люди жертвуют в конце больше всего.</div></div><span class="task-badge b-critical">ДЕНЬ 28–30</span></div>
+  </div>
+</div>
+
+<!-- PHASE 3 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">3</div>
+    <div>
+      <div class="phase-title">Инфраструктура — После сбора</div>
+      <div class="phase-sub">Поднять сервер и запустить публичную версию</div>
+    </div>
+    <span class="phase-tag tag-month">1–2 месяца</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">39</div><div class="task-content"><div class="task-title">Выбрать и арендовать GPU-сервер</div><div class="task-desc">RunPod / Vast.ai / Hetzner. Llama 3.1 8B: нужна GPU с 16GB VRAM. RTX 4090 или A10G.</div></div><span class="task-badge b-critical">ПРИОРИТЕТ 1</span></div>
+    <div class="task"><div class="task-n">40</div><div class="task-content"><div class="task-title">Зарегистрировать домен tengu.ai / tengu.app</div><div class="task-desc">Проверить на namecheap.com. Если занято: gettengu.com, tengu.chat, tengu.space</div></div><span class="task-badge b-critical">ПРИОРИТЕТ 2</span></div>
+    <div class="task"><div class="task-n">41</div><div class="task-content"><div class="task-title">Настроить Ubuntu на сервере</div><div class="task-desc">Docker, Ollama, Python, Nginx. По инструкции которую я напишу.</div></div><span class="task-badge b-critical">ПРИОРИТЕТ 3</span></div>
+    <div class="task"><div class="task-n">42</div><div class="task-content"><div class="task-title">Настроить HTTPS (SSL)</div><div class="task-desc">Let's Encrypt + Certbot. Бесплатно, автообновление.</div></div><span class="task-badge b-critical">БЕЗОПАСНОСТЬ</span></div>
+    <div class="task"><div class="task-n">43</div><div class="task-content"><div class="task-title">Перенести приложение на сервер</div><div class="task-desc">git clone → pip install → настройка переменных → запуск через systemd (автозапуск)</div></div><span class="task-badge b-critical">ДЕПЛОЙ</span></div>
+    <div class="task"><div class="task-n">44</div><div class="task-content"><div class="task-title">Добавить регистрацию через email</div><div class="task-desc">Сейчас только имя — для публичной версии нужна возможность восстановления аккаунта</div></div><span class="task-badge b-important">V2</span></div>
+    <div class="task"><div class="task-n">45</div><div class="task-content"><div class="task-title">Настроить мониторинг (Uptime Robot)</div><div class="task-desc">Бесплатный сервис. Уведомляет в Telegram если сервер упал.</div></div><span class="task-badge b-important">СТАБИЛЬНОСТЬ</span></div>
+    <div class="task"><div class="task-n">46</div><div class="task-content"><div class="task-title">Настроить автобэкап базы данных</div><div class="task-desc">Ежедневный бэкап SQLite в S3 или Backblaze. Данные пользователей священны.</div></div><span class="task-badge b-important">НАДЁЖНОСТЬ</span></div>
+    <div class="task"><div class="task-n">47</div><div class="task-content"><div class="task-title">Провести нагрузочное тестирование</div><div class="task-desc">Simul 50 одновременных пользователей. Найти узкие места до публичного запуска.</div></div><span class="task-badge b-important">ТЕСТ</span></div>
+    <div class="task"><div class="task-n">48</div><div class="task-content"><div class="task-title">🌐 Публичный запуск TENGU</div><div class="task-desc">Сайт онлайн. Ссылка всем кто поддержал. Объявление в Telegram-канале.</div></div><span class="task-badge b-critical">ЗАПУСК</span></div>
+    <div class="task"><div class="task-n">49</div><div class="task-content"><div class="task-title">Написать отчёт бэкерам</div><div class="task-desc">"Мы запустились. Вот что сделано на ваши деньги. Вот ссылка. Спасибо."</div></div><span class="task-badge b-critical">ОБЯЗАТЕЛЬНО</span></div>
+    <div class="task"><div class="task-n">50</div><div class="task-content"><div class="task-title">Публичный финансовый отчёт</div><div class="task-desc">Собрали $X. Потратили: сервер $Y, домен $Z. Остаток $W. Публично. Прозрачность — это власть.</div></div><span class="task-badge b-critical">ПРОЗРАЧНОСТЬ</span></div>
+  </div>
+</div>
+
+<!-- PHASE 4 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">4</div>
+    <div>
+      <div class="phase-title">Продукт — Версия 2.0</div>
+      <div class="phase-sub">Сделать TENGU сильнее и удобнее</div>
+    </div>
+    <span class="phase-tag tag-month">3–6 месяцев</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">51</div><div class="task-content"><div class="task-title">Многоязычность: EN, ZH, ES, AR, HI</div><div class="task-desc">Интерфейс на 6 языках. AI уже отвечает на любом — добавить выбор языка UI.</div></div><span class="task-badge b-important">ГЛОБАЛ</span></div>
+    <div class="task"><div class="task-n">52</div><div class="task-content"><div class="task-title">Загрузка документов (PDF, DOCX, TXT)</div><div class="task-desc">Пользователь загружает документ → задаёт вопросы по нему. Учёба через свои материалы.</div></div><span class="task-badge b-important">ФИЧА</span></div>
+    <div class="task"><div class="task-n">53</div><div class="task-content"><div class="task-title">Поиск в интернете</div><div class="task-desc">Интеграция с DuckDuckGo или Brave Search API. TENGU отвечает на актуальные вопросы.</div></div><span class="task-badge b-nice">ФИЧА</span></div>
+    <div class="task"><div class="task-n">54</div><div class="task-content"><div class="task-title">TTS — голосовые ответы</div><div class="task-desc">TENGU отвечает голосом. Ввод голосом + ответ голосом = полностью голосовой режим.</div></div><span class="task-badge b-nice">ФИЧА</span></div>
+    <div class="task"><div class="task-n">55</div><div class="task-content"><div class="task-title">Режим "Учитель": структурированные курсы</div><div class="task-desc">TENGU сам составляет план обучения по теме. "Хочу изучить Python с нуля за месяц".</div></div><span class="task-badge b-important">ФИЧА</span></div>
+    <div class="task"><div class="task-n">56</div><div class="task-content"><div class="task-title">Тесты и проверка знаний</div><div class="task-desc">После темы — 5 вопросов для проверки. Результат сохраняется в профиль.</div></div><span class="task-badge b-important">ОБУЧЕНИЕ</span></div>
+    <div class="task"><div class="task-n">57</div><div class="task-content"><div class="task-title">Прогресс обучения</div><div class="task-desc">Визуальный граф тем которые изучил. "Ты прошёл 23% программирования на Python."</div></div><span class="task-badge b-nice">UX</span></div>
+    <div class="task"><div class="task-n">58</div><div class="task-content"><div class="task-title">Progressive Web App (PWA)</div><div class="task-desc">Установить на телефон как приложение. Работает без App Store.</div></div><span class="task-badge b-important">МОБАЙЛ</span></div>
+    <div class="task"><div class="task-n">59</div><div class="task-content"><div class="task-title">Перейти на Llama 3.1 70B</div><div class="task-desc">Когда будет больший сервер — 70B на порядок умнее 8B. Разница огромная.</div></div><span class="task-badge b-important">AI</span></div>
+    <div class="task"><div class="task-n">60</div><div class="task-content"><div class="task-title">API для разработчиков</div><div class="task-desc">Открытый API для создания приложений на базе TENGU. Сообщество строит вместе с нами.</div></div><span class="task-badge b-nice">ЭКОСИСТЕМА</span></div>
+  </div>
+</div>
+
+<!-- PHASE 5 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">5</div>
+    <div>
+      <div class="phase-title">Мобильное приложение</div>
+      <div class="phase-sub">TENGU в каждом кармане</div>
+    </div>
+    <span class="phase-tag tag-later">6–12 месяцев</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">61</div><div class="task-content"><div class="task-title">Выбрать фреймворк: React Native или Flutter</div><div class="task-desc">Flutter = один код для iOS + Android. React Native = ближе к веб-стеку который уже знаем.</div></div><span class="task-badge b-important">РЕШЕНИЕ</span></div>
+    <div class="task"><div class="task-n">62</div><div class="task-content"><div class="task-title">Разработать мобильный UI/UX</div><div class="task-desc">Та же маска Тэнгу, те же цвета, но адаптированный под touch-интерфейс.</div></div><span class="task-badge b-important">ДИЗАЙН</span></div>
+    <div class="task"><div class="task-n">63</div><div class="task-content"><div class="task-title">Разработать iOS приложение</div><div class="task-desc">Нативный голосовой ввод, push-уведомления, виджет для главного экрана.</div></div><span class="task-badge b-important">iOS</span></div>
+    <div class="task"><div class="task-n">64</div><div class="task-content"><div class="task-title">Разработать Android приложение</div><div class="task-desc">Важнее iOS для глобального охвата — Android занимает 72% рынка смартфонов в мире.</div></div><span class="task-badge b-critical">ANDROID</span></div>
+    <div class="task"><div class="task-n">65</div><div class="task-content"><div class="task-title">Опубликовать в Google Play</div><div class="task-desc">Регистрация: $25 единоразово. Модерация 3–7 дней.</div></div><span class="task-badge b-important">РЕЛИЗ</span></div>
+    <div class="task"><div class="task-n">66</div><div class="task-content"><div class="task-title">Опубликовать в App Store</div><div class="task-desc">Apple Developer: $99/год. Модерация 1–3 дня. Строже к контенту.</div></div><span class="task-badge b-important">РЕЛИЗ</span></div>
+    <div class="task"><div class="task-n">67</div><div class="task-content"><div class="task-title">Оффлайн-режим</div><div class="task-desc">Запустить маленькую модель прямо на телефоне (llama.cpp + 1B модель). TENGU без интернета.</div></div><span class="task-badge b-nice">МЕЧТА</span></div>
+  </div>
+</div>
+
+<!-- PHASE 6 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">6</div>
+    <div>
+      <div class="phase-title">Масштаб — Весь мир</div>
+      <div class="phase-sub">Партнёрства, open source, фонд</div>
+    </div>
+    <span class="phase-tag tag-later">1–2 года</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">68</div><div class="task-content"><div class="task-title">Партнёрства со школами и университетами</div><div class="task-desc">Бесплатно для учебных заведений. Первые 10 партнёров = кейс для следующих 100.</div></div><span class="task-badge b-important">ПАРТНЁРСТВА</span></div>
+    <div class="task"><div class="task-n">69</div><div class="task-content"><div class="task-title">Партнёрства с библиотеками</div><div class="task-desc">Библиотеки — про бесплатный доступ к знанию. Наши ценности совпадают полностью.</div></div><span class="task-badge b-important">ПАРТНЁРСТВА</span></div>
+    <div class="task"><div class="task-n">70</div><div class="task-content"><div class="task-title">Программа для НКО</div><div class="task-desc">Некоммерческим организациям — приоритетный доступ и поддержка. Бесплатно всегда.</div></div><span class="task-badge b-important">СОЦИАЛЬНОЕ</span></div>
+    <div class="task"><div class="task-n">71</div><div class="task-content"><div class="task-title">Открыть исходный код (open source)</div><div class="task-desc">MIT лицензия. Любой может изучить, улучшить, задеплоить сам. Прозрачность максимальная.</div></div><span class="task-badge b-vision">ПРИНЦИП</span></div>
+    <div class="task"><div class="task-n">72</div><div class="task-content"><div class="task-title">Создать сообщество разработчиков</div><div class="task-desc">GitHub contributors, hackathons, bounty-программа за исправление багов.</div></div><span class="task-badge b-important">СООБЩЕСТВО</span></div>
+    <div class="task"><div class="task-n">73</div><div class="task-content"><div class="task-title">Подать на гранты</div><div class="task-desc">Mozilla Foundation / EU AI grants / Open Technology Fund. Гранты для открытого AI-образования.</div></div><span class="task-badge b-important">ФИНАНСЫ</span></div>
+    <div class="task"><div class="task-n">74</div><div class="task-content"><div class="task-title">Ежегодный отчёт прозрачности</div><div class="task-desc">Как Wikipedia: ежегодно публиковать финансы, статистику, планы. Пользователи — совладельцы.</div></div><span class="task-badge b-vision">ТРАДИЦИЯ</span></div>
+    <div class="task"><div class="task-n">75</div><div class="task-content"><div class="task-title">Написать Манифест открытого AI</div><div class="task-desc">"Знание — это право, а не привилегия." Документ-основание, как Декларация прав.</div></div><span class="task-badge b-vision">МАНИФЕСТ</span></div>
+    <div class="task"><div class="task-n">76</div><div class="task-content"><div class="task-title">Создать Фонд TENGU</div><div class="task-desc">Некоммерческая организация. Управляет инфраструктурой. Защищает миссию юридически.</div></div><span class="task-badge b-vision">ЗАЩИТА</span></div>
+    <div class="task"><div class="task-n">77</div><div class="task-content"><div class="task-title">Провести первую TENGU конференцию</div><div class="task-desc">"Знание для каждого" — онлайн-конференция. Спикеры из образования, AI, open source.</div></div><span class="task-badge b-nice">СОБЫТИЕ</span></div>
+  </div>
+</div>
+
+<!-- PHASE 7 -->
+<div class="phase">
+  <div class="phase-header">
+    <div class="phase-num">7</div>
+    <div>
+      <div class="phase-title">Навсегда — Бесплатно для всей Земли</div>
+      <div class="phase-sub">Конечная цель. Misión completa.</div>
+    </div>
+    <span class="phase-tag tag-forever">Навсегда</span>
+  </div>
+  <div class="tasks">
+    <div class="task"><div class="task-n">78</div><div class="task-content"><div class="task-title">Создать эндаумент-фонд</div><div class="task-desc">Инвестировать накопленные средства. Доход с инвестиций покрывает серверы вечно. Как в Оксфорде.</div></div><span class="task-badge b-vision">ВЕЧНОСТЬ</span></div>
+    <div class="task"><div class="task-n">79</div><div class="task-content"><div class="task-title">Достичь самоокупаемости через пожертвования</div><div class="task-desc">Как Wikipedia: 1% пользователей жертвуют добровольно — этого хватает на 100%.</div></div><span class="task-badge b-vision">УСТОЙЧИВОСТЬ</span></div>
+    <div class="task"><div class="task-n">80</div><div class="task-content"><div class="task-title">TENGU работает без основателей</div><div class="task-desc">Управление передано сообществу. Конституция TENGU защищает миссию от любых изменений.</div></div><span class="task-badge b-vision">СВОБОДА</span></div>
+    <div class="task"><div class="task-n">81</div><div class="task-content"><div class="task-title">Каждый человек на Земле имеет доступ</div><div class="task-desc">100+ языков. Мобильное приложение. Оффлайн-режим для зон без интернета. Это и есть победа.</div></div><span class="task-badge b-vision">ФИНАЛ</span></div>
+  </div>
+</div>
+
+<!-- MANIFESTO -->
+<div class="manifesto-section">
+  <svg width="52" height="52" viewBox="0 0 32 32" fill="none" style="margin:0 auto 20px;display:block">
+    <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+    <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+    <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+    <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+    <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M12 20.5 Q16 22 20 20.5" stroke="#991b1b" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+  </svg>
+  <h2>Почему это важно.</h2>
+  <p>Пока мир горит — бомбардировки, кризисы, войны — <strong>знание остаётся единственным, что нельзя сжечь.</strong> Ни одна бомба не уничтожит то, что ты узнал.</p>
+  <p>Мы не стартап. Мы не ищем инвесторов. Мы просто люди с большой идеей и с убеждением, что каждый человек — гениален в своём. Нужно только дать ему инструмент.</p>
+  <p><strong>Делай добро и бросай его в воду.</strong></p>
+  <div class="big-slogan">Один человек. Один язык. Один вопрос.<br>Бесплатно навсегда.</div>
+  <p style="color:var(--text3);font-size:13px;margin-top:20px">TENGU · 天狗 · Демон мудрости · 2026</p>
+</div>
+
+</div><!-- /body -->
+</body>
+</html>

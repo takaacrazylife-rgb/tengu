@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU · {{ username }}</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* Memory widget */
+.memory-widget {
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
+  background:rgba(220,38,38,.04);
+}
+.memory-header {
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;cursor:pointer;user-select:none;
+  transition:background .15s;
+}
+.memory-header:hover{background:rgba(255,255,255,.02);}
+.memory-dot {
+  width:6px;height:6px;border-radius:50%;
+  background:var(--red);animation:pulseGold .9s infinite;flex-shrink:0;
+}
+.memory-label{font-size:12px;color:var(--text3);flex:1;}
+.memory-toggle{font-size:11px;color:var(--text3);transition:transform .2s;}
+.memory-toggle.open{transform:rotate(90deg);}
+.memory-body{padding:4px 16px 10px;}
+.mem-row{display:flex;gap:10px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.mem-row:last-child{border:none;}
+.mem-key{color:var(--text3);min-width:70px;flex-shrink:0;}
+.mem-val{color:var(--text2);line-height:1.5;}
+/* Daily question */
+.daily-q-banner {
+  flex-shrink:0;
+  margin:10px 12px 0;
+  padding:14px 16px;
+  background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(220,38,38,.06));
+  border:1px solid rgba(99,102,241,.25);
+  border-radius:12px;
+  animation:fadeUp .3s ease;
+}
+.daily-q-label{font-size:10px;color:var(--indigo);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:6px;}
+.daily-q-text{font-size:15px;color:var(--text);font-weight:600;margin-bottom:10px;line-height:1.5;}
+.daily-q-btn{
+  padding:6px 14px;background:transparent;
+  border:1px solid rgba(99,102,241,.4);
+  border-radius:8px;color:var(--indigo);
+  font-size:13px;font-weight:600;cursor:pointer;
+  transition:all .15s;
+}
+.daily-q-btn:hover{background:rgba(99,102,241,.1);}
+</style>
+</head>
+<body class="chat-page">
+
+<!-- HEADER -->
+<header class="chat-header">
+  <div class="header-left">
+    <div class="header-avatar" style="background:#0a0b10;border:1px solid rgba(220,38,38,.3);">
+      <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+        <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+        <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+        <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M12 20.5 Q16 22 20 20.5" stroke="#991b1b" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">TENGU</div>
+      <div class="header-user">{{ username }}{% if session_count > 0 %} · {{ session_count }} сессий{% endif %}</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <a href="/pitch" class="header-btn"><span class="header-btn-icon">✦</span><span>О проекте</span></a>
+    <a href="/profile" class="header-btn"><span class="header-btn-icon">⚙</span><span>Профиль</span></a>
+    <button class="header-btn" onclick="newSession()"><span class="header-btn-icon">↺</span><span>Новая</span></button>
+    <a href="/logout" class="header-btn"><span>Выйти</span></a>
+  </div>
+</header>
+
+{% if not model_ready %}
+<div class="model-loading">
+  <span class="pulse-dot"></span>
+  Модель ещё загружается. Напиши — отправится когда будет готово.
+</div>
+{% endif %}
+
+<!-- MEMORY WIDGET — показываем если TENGU уже знает пользователя -->
+{% if profile and profile.get('session_count', 0) > 0 %}
+{% set mem_topics = profile.get('topics', []) %}
+{% set mem_moments = profile.get('key_moments', []) %}
+{% set mem_notes = profile.get('notes', '') %}
+{% if mem_topics or mem_moments or mem_notes %}
+<div class="memory-widget" id="memWidget">
+  <div class="memory-header" onclick="toggleMemory()">
+    <span class="memory-dot"></span>
+    <span class="memory-label">TENGU помнит тебя</span>
+    <span class="memory-toggle" id="memToggle">▸</span>
+  </div>
+  <div class="memory-body hidden" id="memBody">
+    {% if mem_topics %}
+    <div class="mem-row"><span class="mem-key">интересы</span><span class="mem-val">{{ mem_topics[:4] | join(', ') }}</span></div>
+    {% endif %}
+    {% if mem_moments %}
+    <div class="mem-row"><span class="mem-key">прорыв</span><span class="mem-val">{{ mem_moments[-1] }}</span></div>
+    {% endif %}
+    {% if mem_notes %}
+    <div class="mem-row"><span class="mem-key">о тебе</span><span class="mem-val">{{ mem_notes[:120] }}</span></div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- DAILY QUESTION -->
+{% if daily_q %}
+<div class="daily-q-banner">
+  <div class="daily-q-label">Вопрос дня от TENGU</div>
+  <div class="daily-q-text">{{ daily_q }}</div>
+  <button class="daily-q-btn" onclick="useDailyQ(this)">Обсудить →</button>
+</div>
+{% endif %}
+
+<!-- MESSAGES -->
+<div class="messages" id="messages">
+
+  {% for msg in messages %}
+  <div class="msg msg-{{ msg.role }}">
+    {% if msg.role == 'assistant' %}
+    <div class="msg-ai-avatar" style="background:#0a0b10;border:1px solid rgba(220,38,38,.3);">
+      <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+        <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+        <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+        <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    {% endif %}
+    <div class="msg-bubble">{{ msg.content }}</div>
+  </div>
+  {% endfor %}
+
+  <div class="typing-indicator hidden" id="typing">
+    <div class="msg msg-assistant">
+      <div class="msg-ai-avatar" style="background:#0a0b10;border:1px solid rgba(220,38,38,.3);">
+        <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+          <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+          <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+          <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+          <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        </svg>
+      </div>
+      <div class="msg-bubble typing-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- INPUT -->
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="msgInput" class="chat-input" placeholder="Спроси Тэнгу о чём угодно..."
+              rows="1" maxlength="4000" autofocus></textarea>
+    <button id="voiceBtn" class="btn-voice" title="Голосовой ввод">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <button id="sendBtn" class="btn-send" title="Отправить (Enter)">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <polyline points="5 11 12 4 19 11"/>
+      </svg>
+    </button>
+  </div>
+  <div class="voice-bar hidden" id="voiceBar">
+    <div class="voice-wave">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <span class="voice-label">Слушаю...</span>
+    <button class="voice-stop-btn" id="voiceStopBtn">■ Стоп</button>
+  </div>
+  <div class="voice-hint hidden" id="voiceHint">Enter или → чтобы отправить</div>
+</div>
+
+<script>
+const messagesEl   = document.getElementById('messages');
+const input        = document.getElementById('msgInput');
+const typing       = document.getElementById('typing');
+const voiceBtn     = document.getElementById('voiceBtn');
+const voiceBar     = document.getElementById('voiceBar');
+const voiceHint    = document.getElementById('voiceHint');
+const voiceStopBtn = document.getElementById('voiceStopBtn');
+let isLoading = false, recognition = null, isListening = false;
+
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+});
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+voiceBtn.addEventListener('click', () => { isListening ? stopVoice() : startVoice(); });
+voiceStopBtn.addEventListener('click', stopVoice);
+
+function scrollBottom() { messagesEl.scrollTo({top: messagesEl.scrollHeight, behavior:'smooth'}); }
+scrollBottom();
+
+function mkAvatar() {
+  const av = document.createElement('div');
+  av.className = 'msg-ai-avatar';
+  av.style.cssText = 'background:#0a0b10;border:1px solid rgba(220,38,38,.3);';
+  av.innerHTML = `<svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+    <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+    <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+    <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+    <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+    <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`;
+  return av;
+}
+
+function appendMessage(role, text) {
+  const div = document.createElement('div');
+  div.className = `msg msg-${role}`;
+  if (role === 'assistant') div.appendChild(mkAvatar());
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  div.appendChild(bubble);
+  messagesEl.insertBefore(div, typing);
+  scrollBottom();
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+  if (isListening) stopVoice();
+  isLoading = true;
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  const welcome = document.querySelector('.welcome-block');
+  if (welcome) welcome.remove();
+  appendMessage('user', text);
+  typing.classList.remove('hidden');
+  scrollBottom();
+  try {
+    const resp = await fetch('/send', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message: text})
+    });
+    const data = await resp.json();
+    typing.classList.add('hidden');
+    appendMessage('assistant', data.reply || data.error || '...');
+  } catch(e) {
+    typing.classList.add('hidden');
+    appendMessage('assistant', 'Ошибка соединения. Попробуй ещё раз.');
+  }
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+async function newSession() {
+  if (!confirm('Начать новую сессию?')) return;
+  await fetch('/new_session', {method:'POST'});
+  location.reload();
+}
+
+function startVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Голосовой ввод: нужен Chrome или Safari.'); return; }
+  recognition = new SR();
+  recognition.lang = 'ru-RU';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  let finalTranscript = '';
+  recognition.onstart = () => {
+    isListening = true;
+    voiceBtn.classList.add('recording');
+    voiceBar.classList.remove('hidden');
+    voiceHint.classList.add('hidden');
+    input.value = ''; input.style.height = 'auto';
+  };
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + ' ';
+      else interim = e.results[i][0].transcript;
+    }
+    input.value = finalTranscript + interim;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  };
+  recognition.onerror = () => stopVoice();
+  recognition.onend = () => { if (isListening) recognition.start(); };
+  recognition.start();
+}
+
+function stopVoice() {
+  if (recognition) { recognition.onend = null; recognition.stop(); }
+  recognition = null; isListening = false;
+  voiceBtn.classList.remove('recording');
+  voiceBar.classList.add('hidden');
+  if (input.value.trim()) { voiceHint.classList.remove('hidden'); input.focus(); }
+}
+
+// ── MEMORY WIDGET ─────────────────────────────────────────
+function toggleMemory() {
+  const body = document.getElementById('memBody');
+  const toggle = document.getElementById('memToggle');
+  if (!body) return;
+  body.classList.toggle('hidden');
+  toggle.classList.toggle('open');
+}
+
+// ── DAILY QUESTION ────────────────────────────────────────
+function useDailyQ(btn) {
+  const q = btn.closest('.daily-q-banner').querySelector('.daily-q-text').textContent;
+  input.value = q;
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  btn.closest('.daily-q-banner').remove();
+  input.focus();
+}
+</script>
+</body>
+</html>

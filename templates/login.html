@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU — Войти</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="center-page">
+<div class="login-card">
+
+  <div class="login-llama">
+    <!-- Маска Тэнгу: красная, длинный нос, чёрный фон -->
+    <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
+      <circle cx="16" cy="16" r="16" fill="#0a0b10"/>
+      <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+      <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+      <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M12 20.5 Q16 22 20 20.5" stroke="#991b1b" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="nexus-logo">TENGU</div>
+  <div class="login-sub">Знание для каждого · Бесплатно навсегда</div>
+
+  <div class="login-tagline">
+    Один человек. Один язык. Один вопрос.<br>
+    <strong style="color:#f1f5f9">Бесплатно навсегда.</strong>
+  </div>
+
+  <form method="POST" action="/">
+    <div class="field">
+      <input type="text" name="username" placeholder="Как тебя зовут?" autofocus
+             autocomplete="off" maxlength="32" class="input-main">
+    </div>
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+    <button type="submit" class="btn-enter">Начать →</button>
+  </form>
+
+  <div class="login-hint">
+    Никакого пароля. Просто твоё имя. Система запомнит тебя.<br><br>
+    <a href="/pitch" style="color:var(--indigo);text-decoration:none;font-size:12px">
+      ✦ О проекте и краудфандинге →
+    </a>
+  </div>
+</div>
+</body>
+</html>

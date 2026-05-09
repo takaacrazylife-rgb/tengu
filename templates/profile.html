@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU · Мой профиль</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="profile-page">
+<header class="chat-header">
+  <div class="header-left">
+    <a href="/chat" class="nexus-logo-sm">TENGU</a>
+    <span class="header-user">{{ username }}</span>
+  </div>
+  <div class="header-right">
+    <a href="/chat" class="header-link">← чат</a>
+    <a href="/logout" class="header-link">выйти</a>
+  </div>
+</header>
+
+<div class="profile-container">
+  <div class="profile-header">
+    <div class="profile-avatar">{{ username[0].upper() }}</div>
+    <div>
+      <div class="profile-name">{{ username }}</div>
+      <div class="profile-meta">{{ profile.session_count }} сессий · {{ profile.total_messages }} сообщений</div>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+
+    <!-- Стиль -->
+    <div class="profile-card">
+      <div class="pcard-label">Стиль общения</div>
+      <div class="pcard-value" id="style-val">{{ profile.style or 'определяется...' }}</div>
+      <select id="style-sel" class="p-select" onchange="updateField('style', this.value)">
+        <option value="unknown" {% if profile.style=='unknown' %}selected{% endif %}>Не задан</option>
+        <option value="casual" {% if profile.style=='casual' %}selected{% endif %}>Разговорный (как с другом)</option>
+        <option value="formal" {% if profile.style=='formal' %}selected{% endif %}>Официальный</option>
+        <option value="simple" {% if profile.style=='simple' %}selected{% endif %}>Максимально просто</option>
+        <option value="technical" {% if profile.style=='technical' %}selected{% endif %}>Технический</option>
+      </select>
+    </div>
+
+    <!-- Темп -->
+    <div class="profile-card">
+      <div class="pcard-label">Темп и глубина</div>
+      <select id="depth-sel" class="p-select" onchange="updateField('depth', this.value)">
+        <option value="surface" {% if profile.depth=='surface' %}selected{% endif %}>Быстро — только суть</option>
+        <option value="medium" {% if profile.depth=='medium' %}selected{% endif %}>Сбалансированно</option>
+        <option value="deep" {% if profile.depth=='deep' %}selected{% endif %}>Глубоко — хочу понять всё</option>
+      </select>
+    </div>
+
+    <!-- Аналогии -->
+    <div class="profile-card profile-card-wide">
+      <div class="pcard-label">Что мне понятно (аналогии)</div>
+      <div class="tags-display" id="analogies-tags">
+        {% for a in profile.analogies %}
+        <span class="ptag">{{ a }} <button onclick="removeTag('analogies','{{ a }}')">×</button></span>
+        {% endfor %}
+      </div>
+      <div class="tag-input-row">
+        <input id="analogy-input" class="p-input" placeholder="Добавить (напр: кулинария, спорт...)">
+        <button class="p-btn" onclick="addTag('analogies','analogy-input')">+</button>
+      </div>
+    </div>
+
+    <!-- Ключевые моменты -->
+    <div class="profile-card profile-card-wide">
+      <div class="pcard-label">Ключевые моменты (записано системой)</div>
+      {% if profile.key_moments %}
+        {% for km in profile.key_moments %}
+        <div class="km-item">✦ {{ km }}</div>
+        {% endfor %}
+      {% else %}
+        <div class="km-empty">Появятся после нескольких сессий</div>
+      {% endif %}
+    </div>
+
+    <!-- Темы -->
+    <div class="profile-card profile-card-wide">
+      <div class="pcard-label">Темы которые тебя интересуют</div>
+      <div class="tags-display">
+        {% for t in profile.topics %}
+        <span class="ptag ptag-blue">{{ t }}</span>
+        {% endfor %}
+        {% if not profile.topics %}
+        <span class="km-empty">Определится из разговоров</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Заметки -->
+    <div class="profile-card profile-card-wide">
+      <div class="pcard-label">Мои заметки о себе</div>
+      <textarea id="notes-ta" class="p-textarea" placeholder="Напиши что-нибудь о себе — это поможет системе лучше тебя понять">{{ profile.notes or '' }}</textarea>
+      <button class="p-btn" onclick="saveNotes()">Сохранить</button>
+    </div>
+
+  </div>
+
+  <div id="save-status" class="save-status hidden">Сохранено ✓</div>
+</div>
+
+<script>
+const profile = {{ profile | tojson }};
+
+async function updateField(key, value) {
+  await fetch('/profile/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({[key]: value})
+  });
+  showSaved();
+}
+
+async function addTag(key, inputId) {
+  const input = document.getElementById(inputId);
+  const val = input.value.trim();
+  if (!val) return;
+  const arr = (profile[key] || []);
+  if (!arr.includes(val)) arr.push(val);
+  profile[key] = arr;
+  input.value = '';
+  await updateField(key, arr);
+  location.reload();
+}
+
+async function removeTag(key, val) {
+  profile[key] = (profile[key] || []).filter(x => x !== val);
+  await updateField(key, profile[key]);
+  location.reload();
+}
+
+async function saveNotes() {
+  await updateField('notes', document.getElementById('notes-ta').value);
+}
+
+function showSaved() {
+  const el = document.getElementById('save-status');
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 2000);
+}
+</script>
+</body>
+</html>

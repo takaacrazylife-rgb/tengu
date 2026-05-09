@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU — Что хочешь изучать?</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+.ob-page {
+  min-height:100vh;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(220,38,38,.1), transparent 60%), var(--bg);
+  display:flex;flex-direction:column;align-items:center;
+  padding:40px 20px 80px;
+}
+.ob-logo {
+  display:flex;align-items:center;gap:10px;margin-bottom:36px;
+}
+.ob-logo-box {
+  width:44px;height:44px;background:#0a0b10;
+  border:1.5px solid rgba(220,38,38,.35);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px rgba(220,38,38,.2);
+}
+.ob-logo-name {font-size:20px;font-weight:900;color:var(--text);letter-spacing:-.02em;}
+.ob-hero {text-align:center;max-width:560px;margin-bottom:36px;}
+.ob-title {font-size:clamp(24px,4vw,36px);font-weight:900;letter-spacing:-.02em;margin-bottom:10px;}
+.ob-title span {color:var(--red);}
+.ob-sub {font-size:15px;color:var(--text2);line-height:1.7;}
+.ob-counter {
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:14px;padding:6px 16px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:100px;font-size:13px;color:var(--text3);
+  transition:all .2s;
+}
+.ob-counter.has-picks {
+  border-color:rgba(220,38,38,.4);color:var(--text);background:rgba(220,38,38,.08);
+}
+.ob-counter strong {color:var(--red);}
+
+/* Categories */
+.ob-body {width:100%;max-width:760px;}
+.ob-category {margin-bottom:28px;}
+.ob-cat-label {
+  font-size:11px;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.12em;font-weight:700;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.ob-cat-label::after {
+  content:'';flex:1;height:1px;background:var(--border);
+}
+.ob-topics {display:flex;flex-wrap:wrap;gap:10px;}
+.ob-topic {
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:12px;cursor:pointer;
+  font-size:14px;color:var(--text2);font-weight:500;
+  transition:all .15s;user-select:none;
+}
+.ob-topic:hover {border-color:rgba(220,38,38,.3);color:var(--text);background:var(--bg3);}
+.ob-topic.selected {
+  border-color:var(--red);color:var(--text);
+  background:rgba(220,38,38,.1);
+  box-shadow:0 0 0 3px rgba(220,38,38,.1);
+}
+.ob-topic .ob-icon {font-size:18px;line-height:1;}
+
+/* Footer */
+.ob-footer {
+  position:fixed;bottom:0;left:0;right:0;
+  padding:16px 20px;
+  background:rgba(10,11,16,.95);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  z-index:10;
+}
+.ob-skip {
+  font-size:13px;color:var(--text3);background:none;border:none;
+  cursor:pointer;text-decoration:underline;transition:color .15s;
+}
+.ob-skip:hover{color:var(--text2);}
+.ob-start {
+  padding:14px 36px;background:var(--red);color:#fff;
+  border:none;border-radius:12px;font-size:16px;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 20px rgba(220,38,38,.3);
+  opacity:.4;pointer-events:none;
+}
+.ob-start.active {opacity:1;pointer-events:auto;}
+.ob-start.active:hover {background:var(--red2);transform:translateY(-1px);}
+</style>
+</head>
+<body class="ob-page">
+
+<div class="ob-logo">
+  <div class="ob-logo-box">
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+      <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+      <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+      <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+      <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <span class="ob-logo-name">TENGU</span>
+</div>
+
+<div class="ob-hero">
+  <div class="ob-title">Что хочешь<br><span>изучать</span>, {{ username }}?</div>
+  <div class="ob-sub">
+    Выбери темы которые тебя интересуют — хотя бы одну.<br>
+    TENGU будет строить разговор вокруг них.
+  </div>
+  <div class="ob-counter" id="counter">
+    Выбери хотя бы одну тему
+  </div>
+</div>
+
+<div class="ob-body">
+
+  <div class="ob-category">
+    <div class="ob-cat-label">💻 Технологии</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Программирование"><span class="ob-icon">⌨️</span>Программирование</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Телефоны и гаджеты"><span class="ob-icon">📱</span>Телефоны и гаджеты</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Искусственный интеллект"><span class="ob-icon">🤖</span>Искусственный интеллект</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Компьютеры"><span class="ob-icon">💻</span>Компьютеры</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Интернет и соцсети"><span class="ob-icon">🌐</span>Интернет и соцсети</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Кибербезопасность"><span class="ob-icon">🔐</span>Кибербезопасность</div>
+    </div>
+  </div>
+
+  <div class="ob-category">
+    <div class="ob-cat-label">💰 Деньги и бизнес</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Как зарабатывать деньги"><span class="ob-icon">💵</span>Как зарабатывать</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Инвестиции"><span class="ob-icon">📈</span>Инвестиции</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Предпринимательство"><span class="ob-icon">🚀</span>Предпринимательство</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Криптовалюта"><span class="ob-icon">₿</span>Крипта</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Маркетинг"><span class="ob-icon">📣</span>Маркетинг</div>
+    </div>
+  </div>
+
+  <div class="ob-category">
+    <div class="ob-cat-label">🧠 Наука и знания</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Психология"><span class="ob-icon">🧩</span>Психология</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Физика"><span class="ob-icon">⚛️</span>Физика</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Биология и медицина"><span class="ob-icon">🧬</span>Биология</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Математика"><span class="ob-icon">🔢</span>Математика</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Философия"><span class="ob-icon">🦉</span>Философия</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Астрономия"><span class="ob-icon">🌌</span>Астрономия</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Политэкономия и общество"><span class="ob-icon">⚖️</span>Политэкономия</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Диалектика и логика мышления"><span class="ob-icon">🌀</span>Диалектика</div>
+    </div>
+  </div>
+
+  <div class="ob-category">
+    <div class="ob-cat-label">🌍 Языки и история</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Английский язык"><span class="ob-icon">🇬🇧</span>Английский</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Китайский язык"><span class="ob-icon">🇨🇳</span>Китайский</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Японский язык"><span class="ob-icon">🇯🇵</span>Японский</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Мировая история"><span class="ob-icon">📜</span>История мира</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="История России"><span class="ob-icon">🏰</span>История России</div>
+    </div>
+  </div>
+
+  <div class="ob-category">
+    <div class="ob-cat-label">🎮 Игры и спорт</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Dota 2 и стратегии"><span class="ob-icon">🎮</span>Dota 2 / стратегии</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Разработка игр"><span class="ob-icon">🕹️</span>Разработка игр</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Футбол"><span class="ob-icon">⚽</span>Футбол</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Единоборства и бокс"><span class="ob-icon">🥊</span>Единоборства</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Фитнес и питание"><span class="ob-icon">💪</span>Фитнес</div>
+    </div>
+  </div>
+
+  <div class="ob-category">
+    <div class="ob-cat-label">🎨 Творчество</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Музыка"><span class="ob-icon">🎵</span>Музыка</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Рисование и дизайн"><span class="ob-icon">🎨</span>Дизайн</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Кино и сериалы"><span class="ob-icon">🎬</span>Кино</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Писательство"><span class="ob-icon">✍️</span>Писательство</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Фотография"><span class="ob-icon">📷</span>Фотография</div>
+    </div>
+  </div>
+
+  <div class="ob-category">
+    <div class="ob-cat-label">🌱 Жизнь</div>
+    <div class="ob-topics">
+      <div class="ob-topic" onclick="pick(this)" data-topic="Отношения и общение"><span class="ob-icon">❤️</span>Отношения</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Саморазвитие"><span class="ob-icon">🌟</span>Саморазвитие</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Как работает мозг"><span class="ob-icon">🧠</span>Как работает мозг</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Политика и общество"><span class="ob-icon">🌍</span>Политика</div>
+      <div class="ob-topic" onclick="pick(this)" data-topic="Кулинария"><span class="ob-icon">🍳</span>Кулинария</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="ob-footer">
+  <button class="ob-skip" onclick="skipOnboarding()">Пропустить</button>
+  <button class="ob-start" id="startBtn" onclick="startLearning()">
+    Начать обучение →
+  </button>
+</div>
+
+<script>
+const picked = new Set();
+
+function pick(el) {
+  const topic = el.dataset.topic;
+  if (picked.has(topic)) {
+    picked.delete(topic);
+    el.classList.remove('selected');
+  } else {
+    picked.add(topic);
+    el.classList.add('selected');
+  }
+  updateCounter();
+}
+
+function updateCounter() {
+  const n = picked.size;
+  const counter = document.getElementById('counter');
+  const startBtn = document.getElementById('startBtn');
+  if (n === 0) {
+    counter.className = 'ob-counter';
+    counter.innerHTML = 'Выбери хотя бы одну тему';
+    startBtn.classList.remove('active');
+  } else {
+    counter.className = 'ob-counter has-picks';
+    counter.innerHTML = `Выбрано: <strong>${n}</strong> ${n===1?'тема':n<5?'темы':'тем'}`;
+    startBtn.classList.add('active');
+  }
+}
+
+async function startLearning() {
+  if (picked.size === 0) return;
+  await fetch('/onboarding', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({topics: [...picked]})
+  });
+  window.location.href = '/chat';
+}
+
+async function skipOnboarding() {
+  await fetch('/onboarding', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({topics: []})
+  });
+  window.location.href = '/chat';
+}
+</script>
+</body>
+</html>

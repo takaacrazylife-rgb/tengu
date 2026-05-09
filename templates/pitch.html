@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU — Островок знаний. Бесплатно навсегда.</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+/* proof / transparency section */
+.proof-section { }
+.proof-alert {
+  padding:20px 24px; margin-bottom:24px;
+  background:linear-gradient(135deg,rgba(220,38,38,.08),rgba(245,158,11,.05));
+  border:1.5px solid rgba(220,38,38,.25); border-radius:14px;
+  font-size:16px; line-height:1.75; color:var(--text2);
+}
+.proof-alert strong { color:var(--text); font-size:17px; }
+.proof-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:20px 0; }
+.proof-card {
+  padding:20px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:12px;
+}
+.proof-card-wide { grid-column:1/-1; }
+.proof-card-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.12em; margin-bottom:8px; }
+.proof-card-val { font-size:22px; font-weight:900; color:var(--green); margin-bottom:4px; }
+.proof-card-desc { font-size:13px; color:var(--text3); line-height:1.5; }
+.cost-table { width:100%; border-collapse:collapse; margin-top:16px; }
+.cost-table th { padding:10px 14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); border-bottom:1px solid var(--border); text-align:left; }
+.cost-table td { padding:12px 14px; font-size:14px; border-bottom:1px solid var(--border); }
+.cost-table tr:last-child td { border-bottom:none; font-weight:700; color:var(--text); }
+.cost-table .cost-item { color:var(--text2); }
+.cost-table .cost-price { color:var(--gold); font-weight:600; text-align:right; }
+.cost-table .cost-why { color:var(--text3); font-size:12px; }
+.guarantee-block {
+  margin-top:20px; padding:20px 24px;
+  background:rgba(16,185,129,.06); border:1px solid rgba(16,185,129,.2);
+  border-radius:12px; display:flex; gap:14px; align-items:flex-start;
+}
+.guarantee-icon { font-size:24px; flex-shrink:0; margin-top:2px; }
+.guarantee-text { font-size:14px; color:var(--text2); line-height:1.7; }
+.guarantee-text strong { color:var(--text); display:block; margin-bottom:4px; font-size:15px; }
+@media(max-width:600px){ .proof-grid{grid-template-columns:1fr;} }
+/* donate ways */
+.donate-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:20px; }
+.donate-card {
+  padding:20px; background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:14px; text-align:center; transition:border-color .2s, transform .15s;
+  cursor:pointer; text-decoration:none; display:block;
+}
+.donate-card:hover { border-color:rgba(220,38,38,.4); transform:translateY(-2px); }
+.donate-icon { font-size:28px; margin-bottom:10px; }
+.donate-name { font-size:15px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.donate-desc { font-size:12px; color:var(--text3); line-height:1.5; }
+.donate-tag {
+  display:inline-block; margin-top:8px; padding:2px 10px;
+  background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.25);
+  border-radius:100px; font-size:11px; color:var(--green); font-weight:700;
+}
+.donate-tag-ru { background:rgba(79,126,248,.1); border-color:rgba(79,126,248,.2); color:var(--blue); }
+.donate-tag-global { background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.2); color:var(--gold); }
+.crypto-address {
+  margin-top:16px; padding:12px 16px;
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:10px; font-family:monospace; font-size:13px;
+  color:var(--text2); word-break:break-all; cursor:pointer;
+  transition:border-color .2s;
+}
+.crypto-address:hover { border-color:var(--gold); }
+.waitlist-block {
+  margin-top:24px; padding:24px;
+  background:linear-gradient(135deg,rgba(220,38,38,.08),rgba(99,102,241,.06));
+  border:1px solid rgba(220,38,38,.2); border-radius:14px;
+}
+.waitlist-title { font-size:17px; font-weight:700; margin-bottom:6px; }
+.waitlist-sub { font-size:13px; color:var(--text3); margin-bottom:14px; }
+.waitlist-form { display:flex; gap:8px; }
+.waitlist-input {
+  flex:1; padding:11px 14px; background:var(--bg3);
+  border:1.5px solid var(--border); border-radius:10px;
+  color:var(--text); font-size:14px; outline:none;
+  transition:border-color .2s;
+}
+.waitlist-input:focus { border-color:var(--red); }
+.waitlist-btn {
+  padding:11px 20px; background:var(--red); color:#fff;
+  border:none; border-radius:10px; font-size:14px; font-weight:700;
+  cursor:pointer; white-space:nowrap; transition:all .15s;
+}
+.waitlist-btn:hover { background:var(--red2); }
+.waitlist-count { font-size:12px; color:var(--text3); margin-top:8px; }
+@media(max-width:600px) { .donate-grid{grid-template-columns:1fr;} }
+/* comparison table */
+.compare-block { margin-top:24px; }
+.compare-table { width:100%; border-collapse:collapse; }
+.compare-table th {
+  padding:12px 16px; font-size:12px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.1em; color:var(--text3);
+  border-bottom:1px solid var(--border); text-align:left;
+}
+.compare-table td { padding:13px 16px; font-size:14px; border-bottom:1px solid var(--border); }
+.compare-table tr:last-child td { border-bottom:none; }
+.compare-table tr:hover td { background:rgba(255,255,255,.02); }
+.col-service { color:var(--text2); font-weight:500; }
+.col-free { color:var(--text3); }
+.col-paid { color:var(--gold); font-weight:600; }
+.col-tengu { color:var(--green); font-weight:700; }
+.badge-free-always {
+  display:inline-block; padding:2px 10px;
+  background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.3);
+  border-radius:100px; font-size:12px; color:var(--green); font-weight:700;
+}
+.badge-paid {
+  display:inline-block; padding:2px 10px;
+  background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.2);
+  border-radius:100px; font-size:12px; color:var(--gold);
+}
+.badge-limited {
+  display:inline-block; padding:2px 10px;
+  background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.15);
+  border-radius:100px; font-size:12px; color:var(--red);
+}
+.why-free-block {
+  margin-top:24px; padding:24px 28px;
+  background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(79,126,248,.06));
+  border:1px solid rgba(16,185,129,.2); border-radius:16px;
+  font-size:16px; line-height:1.8; color:var(--text2);
+}
+.why-free-block strong { color:var(--text); }
+/* fire & island */
+.world-banner {
+  background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(245,158,11,.08));
+  border-bottom:1px solid rgba(239,68,68,.2);
+  padding:10px 20px; text-align:center;
+  font-size:13px; color:rgba(251,191,36,.9); letter-spacing:.02em;
+}
+.island-block {
+  margin:48px 0; padding:36px 32px;
+  background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(79,126,248,.06));
+  border:1px solid rgba(99,102,241,.25);
+  border-radius:20px; position:relative; overflow:hidden;
+  text-align:center;
+}
+.island-block::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(99,102,241,.15), transparent);
+  pointer-events:none;
+}
+.island-fire { font-size:13px; color:rgba(239,68,68,.7); letter-spacing:.1em; text-transform:uppercase; margin-bottom:14px; font-weight:600; }
+.island-title {
+  font-size:clamp(22px,4vw,36px); font-weight:900;
+  letter-spacing:-.02em; line-height:1.2; margin-bottom:14px;
+  background:linear-gradient(120deg,#fff 40%,#a5b4fc);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.island-text { font-size:16px; color:var(--text2); line-height:1.8; max-width:560px; margin:0 auto; }
+.island-text strong { color:var(--text); }
+.pitch-page { min-height:100vh; background:var(--bg); }
+.pitch-hero {
+  text-align:center; padding:80px 24px 64px;
+  background:radial-gradient(ellipse 100% 70% at 50% 0%, rgba(99,102,241,.18) 0%, transparent 65%);
+  border-bottom:1px solid var(--border);
+}
+.pitch-owl {
+  width:88px; height:88px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  border-radius:24px; margin:0 auto 28px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 60px rgba(99,102,241,.35);
+  animation:floatLogo 4s ease-in-out infinite;
+}
+.pitch-title {
+  font-size:clamp(32px,5vw,52px); font-weight:900;
+  letter-spacing:-.03em; line-height:1.1;
+  margin-bottom:16px;
+  background:linear-gradient(120deg,#fff 40%,#8b90aa);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.pitch-slogan {
+  font-size:clamp(16px,2.5vw,22px); color:var(--indigo);
+  font-weight:600; letter-spacing:.01em; margin-bottom:24px;
+}
+.pitch-sub {
+  font-size:16px; color:var(--text2); max-width:560px;
+  margin:0 auto 40px; line-height:1.75;
+}
+.pitch-cta-row { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+.btn-pitch-primary {
+  padding:14px 32px; background:var(--indigo); color:#fff;
+  border:none; border-radius:12px; font-size:16px; font-weight:700;
+  cursor:pointer; text-decoration:none; display:inline-block;
+  box-shadow:0 4px 24px rgba(99,102,241,.4);
+  transition:all .2s;
+}
+.btn-pitch-primary:hover { background:#4f46e5; transform:translateY(-2px); }
+.btn-pitch-sec {
+  padding:14px 28px; background:transparent; color:var(--text2);
+  border:1px solid var(--border2); border-radius:12px; font-size:16px;
+  font-weight:600; cursor:pointer; text-decoration:none; display:inline-block;
+  transition:all .2s;
+}
+.btn-pitch-sec:hover { color:var(--text); border-color:var(--text3); }
+
+/* body sections */
+.pitch-body { max-width:820px; margin:0 auto; padding:56px 24px 80px; }
+.pitch-section { margin-bottom:56px; }
+.pitch-section-label {
+  font-size:11px; color:var(--indigo); text-transform:uppercase;
+  letter-spacing:.15em; font-weight:700; margin-bottom:12px;
+}
+.pitch-section-title {
+  font-size:clamp(22px,3vw,32px); font-weight:800;
+  letter-spacing:-.02em; margin-bottom:16px; line-height:1.2;
+}
+.pitch-section-text {
+  font-size:16px; color:var(--text2); line-height:1.8;
+}
+.pitch-section-text strong { color:var(--text); }
+
+/* quote block */
+.pitch-quote {
+  margin:24px 0; padding:20px 24px;
+  background:var(--bg2); border-left:3px solid var(--indigo);
+  border-radius:0 12px 12px 0;
+  font-size:17px; color:var(--text); line-height:1.75; font-style:italic;
+}
+
+/* goals */
+.goals-grid { display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+.goal-item {
+  display:flex; align-items:flex-start; gap:16px;
+  padding:18px 20px; background:var(--bg2);
+  border:1px solid var(--border); border-radius:12px;
+  transition:border-color .2s;
+}
+.goal-item:hover { border-color:var(--indigo); }
+.goal-amount {
+  font-size:20px; font-weight:800; color:var(--indigo);
+  white-space:nowrap; min-width:80px;
+}
+.goal-desc { font-size:14px; color:var(--text2); line-height:1.6; }
+.goal-desc strong { color:var(--text); display:block; margin-bottom:3px; font-size:15px; }
+
+/* budget donut visual */
+.budget-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:20px; }
+.budget-card {
+  padding:20px; background:var(--bg2); border:1px solid var(--border);
+  border-radius:12px; text-align:center;
+}
+.budget-pct { font-size:32px; font-weight:900; margin-bottom:6px; }
+.budget-label { font-size:13px; color:var(--text2); line-height:1.5; }
+.pct-servers { color:var(--indigo); }
+.pct-dev    { color:var(--blue); }
+.pct-ops    { color:var(--green); }
+
+/* manifesto */
+.manifesto {
+  padding:32px; background:var(--bg2); border:1px solid var(--border2);
+  border-radius:16px; margin-top:20px;
+}
+.manifesto p { font-size:16px; color:var(--text2); line-height:1.85; margin-bottom:16px; }
+.manifesto p:last-child { margin:0; }
+.manifesto strong { color:var(--text); }
+
+/* final CTA */
+.pitch-final {
+  text-align:center; padding:48px 24px;
+  background:var(--bg2); border-top:1px solid var(--border);
+}
+.pitch-final-title { font-size:26px; font-weight:800; margin-bottom:10px; }
+.pitch-final-sub { font-size:15px; color:var(--text2); margin-bottom:28px; }
+
+/* nav */
+.pitch-nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 20px; border-bottom:1px solid var(--border);
+  background:rgba(10,11,16,.9); backdrop-filter:blur(12px);
+  position:sticky; top:0; z-index:10;
+}
+.pitch-nav-logo {
+  font-size:17px; font-weight:800;
+  background:linear-gradient(120deg,#fff 30%,#8b90aa);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  text-decoration:none;
+}
+.pitch-nav-links { display:flex; gap:8px; }
+
+@media(max-width:600px){
+  .budget-grid{grid-template-columns:1fr;}
+  .pitch-hero{padding:56px 20px 48px;}
+}
+</style>
+</head>
+<body class="pitch-page">
+
+<!-- TOP BANNER: world on fire -->
+<div class="world-banner">
+  🔥 Пока мир в огне — знание остаётся единственным, что нельзя сжечь. &nbsp;|&nbsp; 🤖 ChatGPT: $20/мес · Claude: $20/мес · TENGU: <strong>бесплатно навсегда</strong>
+</div>
+
+<!-- NAV -->
+<nav class="pitch-nav">
+  <a href="/" class="pitch-nav-logo">TENGU</a>
+  <div class="pitch-nav-links">
+    <a href="/" class="header-btn">Войти</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="pitch-hero">
+  <!-- Маска Тэнгу -->
+  <div class="pitch-owl" style="background:#0a0b10;box-shadow:0 0 60px rgba(220,38,38,.35),0 0 120px rgba(220,38,38,.1);">
+    <svg width="56" height="56" viewBox="0 0 32 32" fill="none">
+      <ellipse cx="16" cy="13.5" rx="10" ry="11" fill="#dc2626"/>
+      <path d="M13 17 L16 30 L19 17 Z" fill="#b91c1c"/>
+      <ellipse cx="11.5" cy="12" rx="3.2" ry="2" fill="#1a0000"/>
+      <ellipse cx="20.5" cy="12" rx="3.2" ry="2" fill="#1a0000"/>
+      <circle cx="11.5" cy="12" r="1" fill="#dc2626" opacity=".3"/>
+      <circle cx="20.5" cy="12" r="1" fill="#dc2626" opacity=".3"/>
+      <path d="M8.5 9.5 L13 11.5" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/>
+      <path d="M19 11.5 L23.5 9.5" stroke="#7f1d1d" stroke-width="2" stroke-linecap="round"/>
+      <path d="M11.5 20 Q16 21.5 20.5 20" stroke="#991b1b" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+      <path d="M7 15.5 Q8 18 10.5 17" stroke="#b91c1c" stroke-width=".8" fill="none" opacity=".5"/>
+      <path d="M25 15.5 Q24 18 21.5 17" stroke="#b91c1c" stroke-width=".8" fill="none" opacity=".5"/>
+    </svg>
+  </div>
+  <div class="pitch-title">Островок знаний<br>в мире, который горит.</div>
+  <div class="pitch-slogan">Один человек. Один язык. Один вопрос. Бесплатно навсегда.</div>
+  <div class="pitch-sub">
+    Бомбардировки. Кризисы. Войны. Пока мир разрушает —
+    TENGU строит. Персональный AI-наставник, который работает 24/7,
+    говорит на твоём языке и помогает учиться чему угодно.
+    Без подписок. Без рекламы. Без корпораций.
+  </div>
+  <div class="pitch-cta-row">
+    <a href="#support" class="btn-pitch-primary">Поддержать проект</a>
+    <a href="#mission" class="btn-pitch-sec">Читать дальше ↓</a>
+  </div>
+</section>
+
+<!-- BODY -->
+<div class="pitch-body">
+
+  <!-- ORIGIN STORY -->
+  <section class="pitch-section" id="mission">
+    <div class="pitch-section-label">С чего всё началось</div>
+    <div class="pitch-section-title">Один таксист изменил всё.</div>
+    <div class="pitch-section-text">
+      Я вызвал такси. Заранее написал водителю в мессенджер — точный адрес, подробно.
+      Когда пришло время — он позвонил: <em>"Куда подъезжать?"</em><br><br>
+      "Я же написал вам." — <em>"Я не могу открыть сообщения."</em><br><br>
+      Он не знал как нажать на всплывающее уведомление. Не мог найти иконку мессенджера.
+      Не понимал как телефон устроен — хотя телефон был у него в руках.
+      В итоге он приехал не туда.<br><br>
+      Я так разозлился что сорвался на близкого человека. Потом успокоился. И подумал:<br><br>
+      <strong>Это не его вина. Никто его не научил.</strong><br><br>
+      Никто не учил его — так же как никто не учит миллиарды людей пользоваться
+      технологиями, которые могли бы изменить их жизнь. Курсы платные. Репетиторы
+      дорогие. YouTube объясняет плохо. А спросить не у кого — стыдно.<br><br>
+      Именно тогда я решил: нужно создать то, что объяснит каждому — на его языке,
+      в его темпе, без осуждения. То, что не скажет "ты должен был это знать".
+      То, что просто ответит на вопрос. Любой вопрос. Бесплатно. Навсегда.
+    </div>
+    <div class="pitch-quote">
+      Этот водитель такси — он есть в каждой стране мира. Их миллиарды.
+      Каждый из них заслуживает своего наставника.<br>
+      <strong>TENGU — это и есть этот наставник.</strong>
+    </div>
+  </section>
+
+  <!-- MISSION -->
+  <section class="pitch-section">
+    <div class="pitch-section-label">Миссия</div>
+    <div class="pitch-section-title">Каждый человек — гениален.</div>
+    <div class="pitch-section-text">
+      Кто-то гениальный сапожник. Кто-то — программист. Кто-то — музыкант.
+      Но не у каждого есть доступ к знаниям, чтобы раскрыть свой потенциал.<br><br>
+      Хорошее образование стоит денег. Репетиторы, курсы, книги — всё платно.
+      AI-сервисы тоже платные: $20, $40, $100 в месяц.
+      <strong>Люди в маленьких городах, бедных странах, без лишних денег — они отрезаны от знаний.</strong><br><br>
+      TENGU — это ответ на этот вопрос.
+    </div>
+    <div class="pitch-quote">
+      «Делай добро и бросай его в воду.»<br>
+      <span style="font-size:13px;color:var(--text3);font-style:normal">— советский мультфильм, философия этого проекта</span>
+    </div>
+  </section>
+
+  <!-- WHAT IS TENGU -->
+  <section class="pitch-section">
+    <div class="pitch-section-label">Что такое TENGU</div>
+    <div class="pitch-section-title">Твой личный AI, который тебя знает.</div>
+    <div class="pitch-section-text">
+      TENGU работает на открытых AI-моделях (Llama) — без корпораций и без слежки.
+      Он запоминает тебя: твой стиль общения, твои интересы, твои знания.
+      С каждым разговором он становится лучше именно для тебя.<br><br>
+      <strong>Голосовой ввод встроен с первого дня.</strong> Говори — не печатай.
+      Задавай вопросы как другу. Учись в своём темпе.<br><br>
+      Приложение уже написано и работает. Нам нужна только одна вещь — серверы.
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="pitch-section">
+    <div class="pitch-section-label">Проблема</div>
+    <div class="pitch-section-title">Бесплатно ≠ дёшево для нас.</div>
+    <div class="pitch-section-text">
+      Чтобы TENGU работал для тысяч людей одновременно — нужны GPU-серверы.
+      Это мощные компьютеры, которые обрабатывают AI-запросы.
+      Они стоят денег. Мы не берём деньги с пользователей — поэтому нам нужна твоя помощь.<br><br>
+      <strong>Краудфандинг = серверы = TENGU бесплатно для всех навсегда.</strong>
+    </div>
+  </section>
+
+  <!-- GOALS -->
+  <section class="pitch-section" id="support">
+    <div class="pitch-section-label">Цели сбора</div>
+    <div class="pitch-section-title">Каждый рубль — это знание для человека.</div>
+    <div class="goals-grid">
+      <div class="goal-item">
+        <div class="goal-amount">$5K</div>
+        <div class="goal-desc">
+          <strong>Старт · 1 000 пользователей</strong>
+          Серверы на 6 месяцев. TENGU становится публичным.
+          Голосовой ввод, память профиля, поддержка русского языка.
+        </div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-amount">$20K</div>
+        <div class="goal-desc">
+          <strong>Рост · 5 000 пользователей</strong>
+          Год работы. Мобильная версия. Поддержка 5 языков.
+          Документы, картинки, видео — по запросу.
+        </div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-amount">$50K</div>
+        <div class="goal-desc">
+          <strong>Масштаб · 50 000 пользователей</strong>
+          Глобальная инфраструктура. 10 языков.
+          Модель, обученная под разные профессии и культуры.
+        </div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-amount">$200K</div>
+        <div class="goal-desc">
+          <strong>Навсегда · Весь мир</strong>
+          Эндаумент-фонд для серверов. TENGU перестаёт зависеть от новых сборов.
+          Бесплатно для каждого человека на Земле — навсегда.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section class="pitch-section">
+    <div class="pitch-section-label">Прозрачность</div>
+    <div class="pitch-section-title">На что идут деньги.</div>
+    <div class="pitch-section-text">
+      Мы публикуем каждую трату. Никаких скрытых расходов.
+    </div>
+    <div class="budget-grid">
+      <div class="budget-card">
+        <div class="budget-pct pct-servers">70%</div>
+        <div class="budget-label">Серверная инфраструктура<br>GPU-серверы для AI</div>
+      </div>
+      <div class="budget-card">
+        <div class="budget-pct pct-dev">20%</div>
+        <div class="budget-label">Разработка и улучшения<br>Новые функции и языки</div>
+      </div>
+      <div class="budget-card">
+        <div class="budget-pct pct-ops">10%</div>
+        <div class="budget-label">Безопасность и хранение<br>Данные пользователей</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY FREE -->
+  <section class="pitch-section">
+    <div class="pitch-section-label">Главное отличие</div>
+    <div class="pitch-section-title">У всех есть платная версия.<br>У нас — нет. Никогда.</div>
+    <div class="pitch-section-text">
+      ChatGPT, Claude, Gemini — у каждого есть «бесплатный» план с ограничениями
+      и платный «Pro» за $20–$40 в месяц. Хочешь лучшую модель? Плати.
+      Хочешь больше сообщений? Плати. Хочешь голосовой ввод? Плати.<br><br>
+      <strong>TENGU устроен иначе.</strong>
+    </div>
+
+    <div class="compare-block">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Сервис</th>
+            <th>Бесплатный план</th>
+            <th>Полная версия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-service">ChatGPT</td>
+            <td><span class="badge-limited">Урезанная модель</span></td>
+            <td><span class="badge-paid">$20 / месяц</span></td>
+          </tr>
+          <tr>
+            <td class="col-service">Claude (Anthropic)</td>
+            <td><span class="badge-limited">Лимит сообщений</span></td>
+            <td><span class="badge-paid">$20 / месяц</span></td>
+          </tr>
+          <tr>
+            <td class="col-service">Gemini (Google)</td>
+            <td><span class="badge-limited">Базовая модель</span></td>
+            <td><span class="badge-paid">$20 / месяц</span></td>
+          </tr>
+          <tr style="background:rgba(16,185,129,.04)">
+            <td class="col-service" style="font-weight:700;color:var(--text)">TENGU</td>
+            <td><span class="badge-free-always">✓ Полная версия</span></td>
+            <td><span class="badge-free-always">✓ Бесплатно навсегда</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="why-free-block">
+      У нас нет «Pro» плана. Нет «Premium». Нет лимитов.
+      <strong>Одна версия — лучшая. И она всегда будет бесплатной.</strong><br><br>
+      Именно поэтому нам нужен краудфандинг: мы не берём деньги с пользователей —
+      мы берём их у тех, кто хочет помочь, чтобы все остальные пользовались бесплатно.
+      <strong>Ты платишь один раз — чтобы миллион человек не платил никогда.</strong>
+    </div>
+  </section>
+
+  <!-- PROOF / ANTI-SCAM -->
+  <section class="pitch-section">
+    <div class="pitch-section-label">Доказательства</div>
+    <div class="pitch-section-title">Ты думаешь — это скам?<br>Правильно думаешь. Проверь сам.</div>
+
+    <div class="proof-alert">
+      <strong>Мы не просим деньги на разработку.</strong><br>
+      TENGU уже написан. Уже работает. Прямо сейчас — на локальном компьютере автора.
+      Мы просим деньги только на одно: <strong>оплатить сервер</strong> чтобы это работало
+      не на одном ноутбуке, а для тысяч людей по всему миру.
+    </div>
+
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-card-label">Статус продукта</div>
+        <div class="proof-card-val">✅ Готов</div>
+        <div class="proof-card-desc">Приложение написано, тёмный дизайн, голосовой ввод, память профиля, AI отвечает.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-label">Написан код</div>
+        <div class="proof-card-val">~600 строк</div>
+        <div class="proof-card-desc">Python + Flask + Ollama. Открытый исходный код на GitHub — читай сам.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-label">AI модель</div>
+        <div class="proof-card-val">Llama 3.1</div>
+        <div class="proof-card-desc">4.9 ГБ скачана и работает локально. Отвечает на русском, английском, любом языке.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-label">Зачем деньги</div>
+        <div class="proof-card-val">Только сервер</div>
+        <div class="proof-card-desc">Сервер с GPU стоит ~$500/мес. На ноутбуке — работает для одного. На сервере — для всех.</div>
+      </div>
+    </div>
+
+    <!-- EXACT COST BREAKDOWN -->
+    <div class="pitch-section-label" style="margin-top:28px">Точная смета — куда идёт каждый доллар</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <table class="cost-table">
+        <thead>
+          <tr>
+            <th>Статья расхода</th>
+            <th>Зачем</th>
+            <th style="text-align:right">Стоимость</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="cost-item">GPU-сервер (RunPod RTX 4090)</td>
+            <td class="cost-why">Запускает AI-модель для пользователей 24/7</td>
+            <td class="cost-price">~$530/мес</td>
+          </tr>
+          <tr>
+            <td class="cost-item">Домен (tengu.ai или .app)</td>
+            <td class="cost-why">Адрес сайта чтобы можно было зайти</td>
+            <td class="cost-price">$15/год</td>
+          </tr>
+          <tr>
+            <td class="cost-item">SSL-сертификат (HTTPS)</td>
+            <td class="cost-why">Безопасное соединение для пользователей</td>
+            <td class="cost-price">Бесплатно</td>
+          </tr>
+          <tr>
+            <td class="cost-item">Хранилище базы данных</td>
+            <td class="cost-why">Сохранение профилей пользователей</td>
+            <td class="cost-price">~$5/мес</td>
+          </tr>
+          <tr>
+            <td class="cost-item">Мониторинг и бэкапы</td>
+            <td class="cost-why">Уведомления если что-то сломалось</td>
+            <td class="cost-price">~$10/мес</td>
+          </tr>
+          <tr>
+            <td class="cost-item" style="font-size:13px;color:var(--text3)">Резерв на непредвиденное</td>
+            <td class="cost-why" style="font-size:13px;color:var(--text3)">Честный буфер 10%</td>
+            <td class="cost-price" style="font-size:13px;color:var(--text3)">~$55/мес</td>
+          </tr>
+          <tr style="background:rgba(16,185,129,.04)">
+            <td><strong>Итого в месяц</strong></td>
+            <td class="cost-why">для ~1 000 пользователей одновременно</td>
+            <td class="cost-price" style="color:var(--green);font-size:16px"><strong>~$600/мес</strong></td>
+          </tr>
+          <tr style="background:rgba(16,185,129,.06)">
+            <td><strong>Цель сбора (6 месяцев)</strong></td>
+            <td class="cost-why">Запас времени чтобы набрать аудиторию и следующий сбор</td>
+            <td class="cost-price" style="color:var(--green);font-size:18px"><strong>$3 600</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- GUARANTEES -->
+    <div class="guarantee-block">
+      <div class="guarantee-icon">🔒</div>
+      <div class="guarantee-text">
+        <strong>Три гарантии против скама</strong>
+        1. <strong>Код открыт на GitHub</strong> — любой разработчик может прочитать каждую строку и убедиться что приложение существует.<br>
+        2. <strong>Финансовый отчёт</strong> — после каждой траты публикуем скриншот счёта. Ни один рубль не уйдёт без публичного объяснения.<br>
+        3. <strong>Если не запустимся</strong> — возвращаем все деньги. Без исключений.
+      </div>
+    </div>
+
+    <!-- VIDEO PROOF placeholder -->
+    <div style="margin-top:20px;padding:24px;background:var(--bg2);border:1px dashed rgba(220,38,38,.3);border-radius:12px;text-align:center">
+      <div style="font-size:32px;margin-bottom:10px">▶</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Демо-видео TENGU в работе</div>
+      <div style="font-size:13px;color:var(--text3)">Видео будет добавлено здесь — реальный экран, реальный разговор с AI, без монтажа.</div>
+    </div>
+  </section>
+
+  <!-- HOW TO DONATE -->
+  <section class="pitch-section" id="support">
+    <div class="pitch-section-label">Как поддержать</div>
+    <div class="pitch-section-title">Три способа. Выбери свой.</div>
+    <div class="pitch-section-text">
+      Мы не берём деньги через платформы которые заблокированы в России.
+      Только реальные, рабочие варианты.
+    </div>
+
+    <div class="donate-grid">
+      <a class="donate-card" href="https://boosty.to" target="_blank">
+        <div class="donate-icon">🇷🇺</div>
+        <div class="donate-name">Boosty</div>
+        <div class="donate-desc">Российский аналог Patreon. Мир, Visa, Mastercard. Работает без VPN.</div>
+        <span class="donate-tag donate-tag-ru">Для России</span>
+      </a>
+      <a class="donate-card" href="https://planeta.ru" target="_blank">
+        <div class="donate-icon">🌍</div>
+        <div class="donate-name">Planeta.ru</div>
+        <div class="donate-desc">Краудфандинг с целями. Видно сколько собрано. Российские карты.</div>
+        <span class="donate-tag donate-tag-ru">Краудфандинг</span>
+      </a>
+      <div class="donate-card" onclick="copyUsdt()">
+        <div class="donate-icon">₮</div>
+        <div class="donate-name">USDT (Crypto)</div>
+        <div class="donate-desc">Для международных доноров. TRC-20 сеть. Нажми чтобы скопировать адрес.</div>
+        <span class="donate-tag donate-tag-global">Весь мир</span>
+      </div>
+    </div>
+
+    <div class="crypto-address" id="usdtAddr" onclick="copyUsdt()" title="Нажми чтобы скопировать">
+      💼 USDT TRC-20: <span id="usdtAddrText">— адрес будет добавлен при запуске —</span>
+      <span id="copyMsg" style="color:var(--green);display:none"> ✓ Скопировано!</span>
+    </div>
+
+    <!-- WAITLIST -->
+    <div class="waitlist-block" style="margin-top:28px;">
+      <div class="waitlist-title">📬 Узнай первым когда откроется сбор</div>
+      <div class="waitlist-sub">Оставь email — пришлём ссылку в день запуска. Никакого спама.</div>
+      <div class="waitlist-form">
+        <input type="email" class="waitlist-input" id="waitlistEmail" placeholder="твой@email.com">
+        <button class="waitlist-btn" onclick="joinWaitlist()">Уведомить меня</button>
+      </div>
+      <div class="waitlist-count" id="waitlistCount">Уже ждут: <strong id="wCount">0</strong> человек</div>
+    </div>
+  </section>
+
+  <!-- ISLAND -->
+  <section class="pitch-section">
+    <div class="island-block">
+      <div class="island-fire">🔥 Наш мир в огне</div>
+      <div class="island-title">TENGU — это твой<br>островок знаний.</div>
+      <div class="island-text">
+        Пока идут войны, рушатся экономики и сжигаются библиотеки —
+        <strong>знание остаётся единственным, что нельзя отнять.</strong><br><br>
+        Ни одна бомба не уничтожит то, что ты узнал.
+        Ни одно правительство не заберёт понимание из твоей головы.
+        Ни одна корпорация не закроет доступ к знанию, если оно бесплатно и открыто.<br><br>
+        <strong>TENGU — это не просто приложение. Это убежище. Это сопротивление через образование.</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- MANIFESTO -->
+  <!-- ФИЛОСОФИЯ TENGU -->
+  <section class="pitch-section" id="philosophy">
+    <div class="pitch-section-label">Философия TENGU</div>
+    <div class="pitch-section-title">Мир состоит из лжи.<br>Мы строим противоядие.</div>
+    <div class="pitch-section-text">
+      Каждый день миллиарды людей получают информацию через фильтр чужих интересов.
+      Корпорации, правительства, алгоритмы — все решают <strong>что ты должен думать.</strong>
+      Мошенничество, провокация, дезинформация — это не исключения. Это система.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0;">
+      <div class="proof-card">
+        <div class="proof-card-label">Ложь</div>
+        <div style="font-size:28px;margin-bottom:8px">🎭</div>
+        <div class="proof-card-desc">Медиа подают одно событие по-разному в зависимости от того, кто платит редакции.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-label">Провокация</div>
+        <div style="font-size:28px;margin-bottom:8px">⚡</div>
+        <div class="proof-card-desc">Алгоритмы соцсетей специально показывают то, что злит — злой человек кликает чаще.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-label">Мошенничество</div>
+        <div style="font-size:28px;margin-bottom:8px">🎣</div>
+        <div class="proof-card-desc">Каждый из нас хоть раз потерял деньги или доверие из-за того, что не мог проверить информацию.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-card-label">Дезинформация</div>
+        <div style="font-size:28px;margin-bottom:8px">📡</div>
+        <div class="proof-card-desc">Во время холодной войны советские достижения — первый человек в космосе, победа над нацизмом — замалчивались или искажались Западом. Это не прошлое — это продолжается.</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(220,38,38,.07);border:1.5px solid rgba(220,38,38,.25);border-radius:16px;padding:28px;margin:24px 0;">
+      <div style="font-size:13px;color:var(--red);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:16px">Принцип TENGU</div>
+      <div style="font-size:17px;color:var(--text);line-height:1.9;font-weight:500">
+        TENGU не скрывает жертв.<br>
+        TENGU проверяет по нескольким независимым источникам.<br>
+        TENGU называет вещи своими именами — даже если это неудобно.<br>
+        <span style="color:var(--red);font-weight:700">TENGU — это не пропаганда. Это антидот.</span>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px">
+      <div style="font-size:13px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:16px">Как TENGU работает с информацией</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--red);font-weight:800;font-size:16px;flex-shrink:0">01</span>
+          <span style="font-size:14px;color:var(--text2);line-height:1.6"><strong style="color:var(--text)">Перекрёстная проверка.</strong> Любой исторический факт — смотрим с разных сторон: первоисточники, противоположные позиции, данные о жертвах.</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--red);font-weight:800;font-size:16px;flex-shrink:0">02</span>
+          <span style="font-size:14px;color:var(--text2);line-height:1.6"><strong style="color:var(--text)">Жертв не прячем.</strong> История — это не только победы. Это и цена побед. TENGU называет числа, имена, факты.</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--red);font-weight:800;font-size:16px;flex-shrink:0">03</span>
+          <span style="font-size:14px;color:var(--text2);line-height:1.6"><strong style="color:var(--text)">Учим проверять, не верить.</strong> Главная задача — не дать тебе готовый вывод, а научить тебя самому находить правду.</span>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <span style="color:var(--red);font-weight:800;font-size:16px;flex-shrink:0">04</span>
+          <span style="font-size:14px;color:var(--text2);line-height:1.6"><strong style="color:var(--text)">Без корпоративного фильтра.</strong> Мы не продаём данные. Нам не нужно угождать рекламодателям. Ответ зависит только от фактов.</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:28px;padding:24px;background:rgba(220,38,38,.06);border-left:3px solid var(--red);border-radius:0 12px 12px 0">
+      <div style="font-size:15px;color:var(--text2);line-height:1.9">
+        9 мая 1945 года советские солдаты водрузили Знамя Победы над Рейхстагом.
+        27 миллионов жизней заплатил советский народ за победу над нацизмом.
+        Это верифицированный исторический факт — из советских, немецких и союзнических архивов одновременно.<br><br>
+        <strong style="color:var(--text)">TENGU создан в том числе для того, чтобы такие факты не терялись под слоем пропаганды с любой стороны.</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="pitch-section">
+    <div class="pitch-section-label">Манифест</div>
+    <div class="pitch-section-title">Почему бесплатно — это принципиально.</div>
+    <div class="manifesto">
+      <p>
+        Мы не стартап, который ищет инвесторов для заработка.
+        Мы не корпорация, которая продаёт данные.
+        <strong>Мы просто два человека с большой идеей.</strong>
+      </p>
+      <p>
+        Есть фильм — «Мирный воин». Его герой понял главное:
+        самое важное в жизни — служить людям.
+        Не ради награды. Не ради признания.
+        <strong>Просто потому что это правильно.</strong>
+      </p>
+      <p>
+        Вот и мы. TENGU — это не бизнес. Это служение.
+        Мы будем всегда его дорабатывать, обсуждать и совершенствовать,
+        чтобы людям было легче. Мы будем слушать каждого пользователя.
+      </p>
+      <p style="font-size:17px;color:var(--text);font-weight:600">
+        «Один человек. Один язык. Один вопрос. Бесплатно навсегда.»
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<!-- FINAL CTA -->
+<section class="pitch-final">
+  <div class="pitch-final-title">Помоги нам изменить мир.</div>
+  <div class="pitch-final-sub">
+    Поделись этой страницей. Расскажи другу. Поддержи сбор.<br>
+    Каждый рубль — это знание для человека, у которого не было доступа к нему.
+  </div>
+  <div class="pitch-cta-row" style="margin-bottom:20px">
+    <a href="#support" class="btn-pitch-primary">Поддержать проект</a>
+    <a href="/" class="btn-pitch-sec">Попробовать TENGU</a>
+  </div>
+  <div style="font-size:13px;color:var(--text3);margin-top:16px">
+    TENGU · Открытый AI · Без корпораций · Без рекламы
+  </div>
+</section>
+
+<script>
+// ── USDT copy ────────────────────────────────────────────
+function copyUsdt() {
+  const addr = document.getElementById('usdtAddrText').textContent.trim();
+  if (addr.startsWith('—')) { alert('Адрес будет добавлен при запуске кампании.'); return; }
+  navigator.clipboard.writeText(addr).then(() => {
+    const msg = document.getElementById('copyMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  });
+}
+
+// ── WAITLIST ─────────────────────────────────────────────
+let waitCount = parseInt(localStorage.getItem('tengu_wcount') || '0');
+document.getElementById('wCount').textContent = waitCount;
+
+function joinWaitlist() {
+  const email = document.getElementById('waitlistEmail').value.trim();
+  if (!email || !email.includes('@')) { alert('Введи корректный email.'); return; }
+  waitCount++;
+  localStorage.setItem('tengu_wcount', waitCount);
+  document.getElementById('wCount').textContent = waitCount;
+  document.getElementById('waitlistEmail').value = '';
+  document.getElementById('waitlistEmail').placeholder = '✓ Записали! Спасибо.';
+  document.querySelector('.waitlist-btn').textContent = '✓ Готово';
+  document.querySelector('.waitlist-btn').style.background = 'var(--green)';
+  // В будущем здесь будет fetch('/waitlist', {method:'POST', body: JSON.stringify({email})})
+}
+</script>
+</body>
+</html>

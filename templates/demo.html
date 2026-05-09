@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TENGU — Как это работает</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0b10; color: #e2e8f0; font-family: -apple-system, sans-serif; }
+
+/* ── HERO ── */
+.demo-hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(220,38,38,.15), transparent 60%);
+  text-align: center;
+}
+.demo-logo { display:flex; align-items:center; gap:12px; margin-bottom:32px; }
+.demo-logo-box {
+  width:52px; height:52px; background:#0a0b10;
+  border:1.5px solid rgba(220,38,38,.4); border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 30px rgba(220,38,38,.25);
+}
+.demo-logo-name { font-size:24px; font-weight:900; letter-spacing:-.03em; }
+.demo-hero h1 { font-size:clamp(32px,6vw,60px); font-weight:900; letter-spacing:-.03em; line-height:1.1; margin-bottom:20px; }
+.demo-hero h1 span { color:#dc2626; }
+.demo-hero p { font-size:18px; color:#94a3b8; max-width:520px; line-height:1.7; margin-bottom:40px; }
+.demo-cta { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+.btn-red { padding:14px 32px; background:#dc2626; color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; text-decoration:none; transition:all .2s; box-shadow:0 4px 20px rgba(220,38,38,.3); }
+.btn-red:hover { background:#b91c1c; transform:translateY(-2px); }
+.btn-ghost { padding:14px 32px; background:transparent; color:#94a3b8; border:1.5px solid rgba(255,255,255,.12); border-radius:12px; font-size:16px; font-weight:600; cursor:pointer; text-decoration:none; transition:all .2s; }
+.btn-ghost:hover { border-color:rgba(220,38,38,.4); color:#e2e8f0; }
+
+/* ── STEPS ── */
+.demo-steps { max-width:1100px; margin:0 auto; padding:80px 20px; }
+.demo-steps-title {
+  text-align:center; font-size:clamp(24px,4vw,38px); font-weight:900;
+  letter-spacing:-.02em; margin-bottom:64px;
+}
+.demo-steps-title span { color:#dc2626; }
+
+.step {
+  display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;
+  margin-bottom:100px;
+}
+.step.reverse { direction:rtl; }
+.step.reverse > * { direction:ltr; }
+.step-text { }
+.step-num {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px; background:rgba(220,38,38,.15);
+  border:1.5px solid rgba(220,38,38,.4); border-radius:50%;
+  font-size:14px; font-weight:800; color:#dc2626; margin-bottom:20px;
+}
+.step-title { font-size:clamp(22px,3vw,32px); font-weight:900; letter-spacing:-.02em; margin-bottom:12px; }
+.step-desc { font-size:16px; color:#94a3b8; line-height:1.8; margin-bottom:20px; }
+.step-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 14px; background:rgba(220,38,38,.1);
+  border:1px solid rgba(220,38,38,.3); border-radius:100px;
+  font-size:13px; color:#dc2626; font-weight:600;
+}
+
+/* ── PHONE MOCKUP ── */
+.phone {
+  background:#12141f; border:1.5px solid rgba(255,255,255,.08);
+  border-radius:24px; overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04);
+  max-width:340px; margin:0 auto; width:100%;
+}
+.phone-bar {
+  background:#0a0b10; padding:12px 16px;
+  display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.phone-bar-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.15); }
+.phone-bar-url {
+  flex:1; background:rgba(255,255,255,.05); border-radius:6px;
+  padding:4px 10px; font-size:11px; color:#475569; text-align:center;
+}
+.phone-body { padding:24px; }
+
+/* ── LOGIN MOCKUP ── */
+.mock-login { text-align:center; }
+.mock-logo-row { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:24px; }
+.mock-logo-box { width:40px; height:40px; background:#0a0b10; border:1.5px solid rgba(220,38,38,.35); border-radius:10px; display:flex; align-items:center; justify-content:center; }
+.mock-logo-name { font-size:18px; font-weight:900; }
+.mock-tagline { font-size:22px; font-weight:900; margin-bottom:6px; }
+.mock-tagline span { color:#dc2626; }
+.mock-sub { font-size:12px; color:#64748b; margin-bottom:24px; }
+.mock-input {
+  width:100%; padding:12px 16px; background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,255,255,.1); border-radius:10px;
+  color:#e2e8f0; font-size:14px; margin-bottom:12px;
+}
+.mock-input.focused { border-color:rgba(220,38,38,.5); }
+.mock-btn { width:100%; padding:12px; background:#dc2626; color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; }
+.mock-free { font-size:11px; color:#475569; margin-top:12px; }
+.mock-free span { color:#dc2626; }
+
+/* ── ONBOARDING MOCKUP ── */
+.mock-ob-title { font-size:18px; font-weight:900; margin-bottom:4px; }
+.mock-ob-title span { color:#dc2626; }
+.mock-ob-sub { font-size:11px; color:#64748b; margin-bottom:16px; }
+.mock-topics { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+.mock-topic {
+  padding:6px 12px; background:rgba(255,255,255,.04);
+  border:1.5px solid rgba(255,255,255,.1); border-radius:8px;
+  font-size:11px; color:#94a3b8;
+}
+.mock-topic.on { border-color:#dc2626; color:#e2e8f0; background:rgba(220,38,38,.1); }
+.mock-counter { font-size:11px; color:#dc2626; margin-bottom:12px; }
+.mock-start { width:100%; padding:11px; background:#dc2626; color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:700; }
+
+/* ── CHAT MOCKUP ── */
+.mock-chat-header {
+  display:flex; align-items:center; gap:8px;
+  padding-bottom:14px; border-bottom:1px solid rgba(255,255,255,.06); margin-bottom:16px;
+}
+.mock-chat-logo { width:28px; height:28px; background:#0a0b10; border:1px solid rgba(220,38,38,.3); border-radius:7px; display:flex; align-items:center; justify-content:center; }
+.mock-chat-name { font-size:15px; font-weight:800; }
+.mock-chat-status { font-size:11px; color:#22c55e; }
+.mock-msgs { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+.msg-ai { background:#1a1d2e; border:1px solid rgba(255,255,255,.08); border-radius:14px 14px 14px 4px; padding:10px 14px; font-size:12px; line-height:1.6; color:#e2e8f0; max-width:85%; }
+.msg-user { background:linear-gradient(135deg,#2563eb,#4f46e5); border-radius:14px 14px 4px 14px; padding:10px 14px; font-size:12px; line-height:1.6; color:#fff; max-width:85%; align-self:flex-end; }
+.mock-input-row { display:flex; gap:8px; }
+.mock-chat-input { flex:1; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:9px 12px; font-size:11px; color:#94a3b8; }
+.mock-send { width:34px; height:34px; background:#dc2626; border:none; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+
+/* ── MEMORY MOCKUP ── */
+.mock-mem-header {
+  display:flex; align-items:center; gap:6px; margin-bottom:12px;
+}
+.mock-mem-dot { width:6px; height:6px; border-radius:50%; background:#dc2626; }
+.mock-mem-label { font-size:12px; font-weight:700; color:#94a3b8; }
+.mock-mem-badge { margin-left:auto; font-size:10px; color:#22c55e; }
+.mock-mem-row { display:flex; gap:8px; margin-bottom:8px; }
+.mock-mem-key { font-size:10px; color:#475569; font-weight:700; text-transform:uppercase; letter-spacing:.06em; width:70px; flex-shrink:0; padding-top:1px; }
+.mock-mem-val { display:flex; flex-wrap:wrap; gap:4px; }
+.mock-mem-chip {
+  padding:2px 8px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+  border-radius:100px; font-size:10px; color:#94a3b8;
+}
+.mock-mem-chip.red { background:rgba(220,38,38,.1); border-color:rgba(220,38,38,.3); color:#dc2626; }
+.mock-mem-divider { height:1px; background:rgba(255,255,255,.06); margin:12px 0; }
+
+/* ── STATS ── */
+.demo-stats {
+  background:#12141f; border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:60px 20px;
+}
+.demo-stats-inner { max-width:900px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:40px; text-align:center; }
+.stat-num { font-size:clamp(36px,5vw,56px); font-weight:900; color:#dc2626; letter-spacing:-.03em; }
+.stat-label { font-size:15px; color:#64748b; margin-top:6px; }
+
+/* ── COMPARE ── */
+.demo-compare { max-width:900px; margin:80px auto; padding:0 20px; }
+.compare-title { text-align:center; font-size:clamp(22px,3.5vw,34px); font-weight:900; margin-bottom:40px; }
+.compare-title span { color:#dc2626; }
+.compare-table { width:100%; border-collapse:collapse; }
+.compare-table th, .compare-table td { padding:14px 20px; text-align:left; border-bottom:1px solid rgba(255,255,255,.06); font-size:14px; }
+.compare-table th { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#475569; font-weight:700; }
+.compare-table td:first-child { color:#94a3b8; }
+.compare-table .col-them { color:#475569; }
+.compare-table .col-us { color:#22c55e; font-weight:700; }
+.compare-row-header td { background:rgba(255,255,255,.03); color:#e2e8f0 !important; font-weight:700; font-size:13px; }
+.badge-price { display:inline-block; padding:3px 10px; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); border-radius:100px; font-size:12px; color:#ef4444; }
+.badge-free { display:inline-block; padding:3px 10px; background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.3); border-radius:100px; font-size:12px; color:#22c55e; }
+
+/* ── FINAL CTA ── */
+.demo-final {
+  text-align:center; padding:100px 20px;
+  background:radial-gradient(ellipse 60% 40% at 50% 100%, rgba(220,38,38,.12), transparent 60%);
+}
+.demo-final h2 { font-size:clamp(28px,5vw,52px); font-weight:900; letter-spacing:-.03em; margin-bottom:16px; }
+.demo-final h2 span { color:#dc2626; }
+.demo-final p { font-size:17px; color:#64748b; max-width:480px; margin:0 auto 40px; line-height:1.7; }
+
+@media(max-width:700px){
+  .step { grid-template-columns:1fr; gap:32px; }
+  .step.reverse { direction:ltr; }
+  .demo-stats-inner { grid-template-columns:1fr; gap:24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="demo-hero">
+  <div class="demo-logo">
+    <div class="demo-logo-box">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+        <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+        <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+        <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+        <path d="M9.5 10 L13.8 11.8" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M18.2 11.8 L22.5 10" stroke="#7f1d1d" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="demo-logo-name">TENGU</span>
+  </div>
+  <h1>Наставник который<br><span>тебя помнит</span></h1>
+  <p>Не курс. Не подписка. Живой разговор с ИИ который адаптируется под тебя — бесплатно навсегда.</p>
+  <div class="demo-cta">
+    <a href="/chat" class="btn-red">Попробовать →</a>
+    <a href="/pitch" class="btn-ghost">Наша миссия</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="demo-stats">
+  <div class="demo-stats-inner">
+    <div>
+      <div class="stat-num">0 ₽</div>
+      <div class="stat-label">навсегда — не подписка</div>
+    </div>
+    <div>
+      <div class="stat-num">8B</div>
+      <div class="stat-label">параметров мозга TENGU</div>
+    </div>
+    <div>
+      <div class="stat-num">∞</div>
+      <div class="stat-label">тем и вопросов без ограничений</div>
+    </div>
+  </div>
+</div>
+
+<!-- STEPS -->
+<div class="demo-steps">
+  <div class="demo-steps-title">Как это работает — <span>4 шага</span></div>
+
+  <!-- STEP 1: Login -->
+  <div class="step">
+    <div class="step-text">
+      <div class="step-num">1</div>
+      <div class="step-title">Просто войди</div>
+      <div class="step-desc">Никакой почты, пароля, карточки. Только имя — и ты уже внутри. TENGU запоминает тебя между сессиями.</div>
+      <div class="step-badge">⚡ 5 секунд на вход</div>
+    </div>
+    <div class="phone">
+      <div class="phone-bar">
+        <div class="phone-bar-dot"></div>
+        <div class="phone-bar-dot"></div>
+        <div class="phone-bar-dot"></div>
+        <div class="phone-bar-url">tengu.ai</div>
+      </div>
+      <div class="phone-body">
+        <div class="mock-login">
+          <div class="mock-logo-row">
+            <div class="mock-logo-box">
+              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+                <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
+                <path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/>
+                <ellipse cx="12.2" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+                <ellipse cx="19.8" cy="12.5" rx="2.8" ry="1.7" fill="#1a0000"/>
+              </svg>
+            </div>
+            <div class="mock-logo-name">TENGU</div>
+          </div>
+          <div class="mock-tagline">Знание — <span>право</span></div>
+          <div class="mock-sub">не привилегия</div>
+          <div class="mock-input focused">artem_</div>
+          <div class="mock-btn">Войти →</div>
+          <div class="mock-free">Бесплатно навсегда <span>♥</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Onboarding -->
+  <div class="step reverse">
+    <div class="step-text">
+      <div class="step-num">2</div>
+      <div class="step-title">Выбери что интересно</div>
+      <div class="step-desc">Как в Duolingo — выбираешь темы. TENGU сразу строит разговор вокруг них. Никаких скучных тестов.</div>
+      <div class="step-badge">🎯 Только то что тебе важно</div>
+    </div>
+    <div class="phone">
+      <div class="phone-bar">
+        <div class="phone-bar-dot"></div><div class="phone-bar-dot"></div><div class="phone-bar-dot"></div>
+        <div class="phone-bar-url">tengu.ai/onboarding</div>
+      </div>
+      <div class="phone-body">
+        <div class="mock-ob-title">Что хочешь <span>изучать</span>?</div>
+        <div class="mock-ob-sub">Выбери хотя бы одну тему</div>
+        <div class="mock-topics">
+          <div class="mock-topic on">⌨️ Программирование</div>
+          <div class="mock-topic on">🤖 Искусственный интеллект</div>
+          <div class="mock-topic">📱 Гаджеты</div>
+          <div class="mock-topic on">🚀 Предпринимательство</div>
+          <div class="mock-topic">📈 Инвестиции</div>
+          <div class="mock-topic">🧬 Биология</div>
+          <div class="mock-topic">🎮 Dota 2</div>
+          <div class="mock-topic">🧠 Психология</div>
+          <div class="mock-topic">🌌 Астрономия</div>
+        </div>
+        <div class="mock-counter">Выбрано: 3 темы</div>
+        <div class="mock-start">Начать обучение →</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Chat -->
+  <div class="step">
+    <div class="step-text">
+      <div class="step-num">3</div>
+      <div class="step-title">Просто спроси</div>
+      <div class="step-desc">TENGU не читает лекции. Он ведёт живой диалог. Адаптируется под твой стиль — дерзкий, дружеский, технический. Отвечает на Enter.</div>
+      <div class="step-badge">🗣️ Говори как с другом</div>
+    </div>
+    <div class="phone">
+      <div class="phone-bar">
+        <div class="phone-bar-dot"></div><div class="phone-bar-dot"></div><div class="phone-bar-dot"></div>
+        <div class="phone-bar-url">tengu.ai/chat</div>
+      </div>
+      <div class="phone-body">
+        <div class="mock-chat-header">
+          <div class="mock-chat-logo">
+            <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/><path d="M13.5 17.5 L16 28.5 L18.5 17.5 Z" fill="#b91c1c"/></svg>
+          </div>
+          <div>
+            <div class="mock-chat-name">TENGU</div>
+            <div class="mock-chat-status">● онлайн</div>
+          </div>
+        </div>
+        <div class="mock-msgs">
+          <div class="msg-ai">Привет, Артём.<br><br>Есть что-то что ты всегда хотел понять — но боялся, что это слишком глупый вопрос?</div>
+          <div class="msg-user">как вообще работает интернет?</div>
+          <div class="msg-ai">Представь миллиарды компьютеров соединённых трубами. Когда ты открываешь сайт — твой браузер кричит в трубу и сервер где-то в Калифорнии отвечает за &lt;200мс.<br><br>Что именно интересует — как данные летят или как адреса работают?</div>
+        </div>
+        <div class="mock-input-row">
+          <div class="mock-chat-input">Пиши тут...</div>
+          <div class="mock-send"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Memory -->
+  <div class="step reverse">
+    <div class="step-text">
+      <div class="step-num">4</div>
+      <div class="step-title">TENGU помнит тебя</div>
+      <div class="step-desc">После каждого разговора — обновляет твой профиль. Знает темы, прорывы, страхи. Следующая сессия начинается там, где закончилась прошлая.</div>
+      <div class="step-badge">🧠 Персональная память</div>
+    </div>
+    <div class="phone">
+      <div class="phone-bar">
+        <div class="phone-bar-dot"></div><div class="phone-bar-dot"></div><div class="phone-bar-dot"></div>
+        <div class="phone-bar-url">tengu.ai/chat</div>
+      </div>
+      <div class="phone-body">
+        <div class="mock-mem-header">
+          <div class="mock-mem-dot"></div>
+          <div class="mock-mem-label">TENGU помнит тебя</div>
+          <div class="mock-mem-badge">✓ обновлено</div>
+        </div>
+        <div class="mock-mem-row">
+          <div class="mock-mem-key">Темы</div>
+          <div class="mock-mem-val">
+            <span class="mock-mem-chip red">ИИ</span>
+            <span class="mock-mem-chip red">Программирование</span>
+            <span class="mock-mem-chip red">Бизнес</span>
+          </div>
+        </div>
+        <div class="mock-mem-row">
+          <div class="mock-mem-key">Прорывы</div>
+          <div class="mock-mem-val">
+            <span class="mock-mem-chip">понял как работают нейросети</span>
+          </div>
+        </div>
+        <div class="mock-mem-row">
+          <div class="mock-mem-key">Стиль</div>
+          <div class="mock-mem-val">
+            <span class="mock-mem-chip">прямой</span>
+            <span class="mock-mem-chip">без лекций</span>
+          </div>
+        </div>
+        <div class="mock-mem-divider"></div>
+        <div style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:6px;">Вопрос дня</div>
+        <div style="font-size:11px;color:#94a3b8;line-height:1.6;">Почему ИИ не может объяснить сам как он думает?</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- COMPARE -->
+<div class="demo-compare">
+  <div class="compare-title">TENGU vs все <span>остальные</span></div>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Параметр</th>
+        <th>ChatGPT / Claude</th>
+        <th>TENGU</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Цена</td>
+        <td class="col-them"><span class="badge-price">$20/мес</span></td>
+        <td class="col-us"><span class="badge-free">Бесплатно навсегда</span></td>
+      </tr>
+      <tr>
+        <td>Помнит тебя</td>
+        <td class="col-them">❌ каждый раз с нуля</td>
+        <td class="col-us">✅ профиль растёт с каждым диалогом</td>
+      </tr>
+      <tr>
+        <td>Адаптируется под стиль</td>
+        <td class="col-them">частично</td>
+        <td class="col-us">✅ автоматически, даже токсичный стиль</td>
+      </tr>
+      <tr>
+        <td>Первый вопрос</td>
+        <td class="col-them">«Как я могу помочь?»</td>
+        <td class="col-us">✅ ломает барьер страха</td>
+      </tr>
+      <tr>
+        <td>Ежедневный вопрос</td>
+        <td class="col-them">❌</td>
+        <td class="col-us">✅ по твоим темам каждый день</td>
+      </tr>
+      <tr>
+        <td>Онбординг</td>
+        <td class="col-them">❌</td>
+        <td class="col-us">✅ выбор тем при первом входе</td>
+      </tr>
+      <tr>
+        <td>Данные</td>
+        <td class="col-them">на серверах OpenAI/Anthropic</td>
+        <td class="col-us">✅ на твоём устройстве (Ollama)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- FINAL CTA -->
+<div class="demo-final">
+  <h2>Готов попробовать<br><span>бесплатно?</span></h2>
+  <p>Не нужна карта. Не нужна почта. Просто войди по имени и спроси то что давно хотел.</p>
+  <div class="demo-cta">
+    <a href="/chat" class="btn-red">Начать прямо сейчас →</a>
+    <a href="/pitch" class="btn-ghost">Поддержать проект</a>
+  </div>
+</div>
+
+</body>
+</html>
