@@ -1,5 +1,6 @@
 import sqlite3, json, os
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 DB = os.path.join(os.path.dirname(__file__), 'nexus.db')
 
@@ -31,6 +32,14 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
     ''')
+    # Миграция: добавить email и password_hash если их нет
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+    if 'email' not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
+    if 'password_hash' not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+    # Уникальный индекс на email (но позволяем NULL)
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email IS NOT NULL")
     conn.commit()
     conn.close()
 
@@ -105,6 +114,50 @@ def all_users():
     rows = conn.execute('SELECT u.*, p.data as profile_data FROM users u LEFT JOIN profiles p ON u.id=p.user_id').fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+# ── AUTH HELPERS ─────────────────────────────────────────────────────────────
+
+def get_user_by_id(user_id):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM users WHERE id=?', (user_id,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_user_by_username(username):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM users WHERE username=?', (username,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def get_user_by_email(email):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM users WHERE email=?', (email,)).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+def set_password(user_id, password):
+    hashed = generate_password_hash(password)
+    conn = get_db()
+    conn.execute('UPDATE users SET password_hash=? WHERE id=?', (hashed, user_id))
+    conn.commit()
+    conn.close()
+
+def set_email(user_id, email):
+    conn = get_db()
+    conn.execute('UPDATE users SET email=? WHERE id=?', (email, user_id))
+    conn.commit()
+    conn.close()
+
+def verify_password(user, password):
+    """True если пароль не задан (старый аккаунт) или совпадает."""
+    if not user:
+        return False
+    if not user.get('password_hash'):
+        return True
+    return check_password_hash(user['password_hash'], password)
+
+def has_password(user):
+    return bool(user and user.get('password_hash'))
 
 def default_profile():
     return {

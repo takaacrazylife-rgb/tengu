@@ -5,12 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TENGU — Войти</title>
 <link rel="stylesheet" href="/static/style.css">
+<style>
+.field-pass{margin-top:10px;animation:slideDown .2s ease;}
+.field-pass.hidden{display:none;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+.toggle-extra{margin-top:10px;font-size:12px;color:var(--text3);text-align:center;cursor:pointer;}
+.toggle-extra:hover{color:var(--text2);}
+</style>
 </head>
 <body class="center-page">
 <div class="login-card">
 
   <div class="login-llama">
-    <!-- Маска Тэнгу: красная, длинный нос, чёрный фон -->
     <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
       <circle cx="16" cy="16" r="16" fill="#0a0b10"/>
       <ellipse cx="16" cy="14" rx="9" ry="10" fill="#dc2626"/>
@@ -31,23 +37,69 @@
     <strong style="color:#f1f5f9">Бесплатно навсегда.</strong>
   </div>
 
-  <form method="POST" action="/">
+  <form method="POST" action="/" id="loginForm">
     <div class="field">
-      <input type="text" name="username" placeholder="Как тебя зовут?" autofocus
-             autocomplete="off" maxlength="32" class="input-main">
+      <input type="text" name="username" id="usernameInput" placeholder="Имя или email"
+             autofocus autocomplete="username" maxlength="64" class="input-main">
     </div>
-    {% if error %}
+    <div class="field field-pass hidden" id="passField">
+      <input type="password" name="password" id="passInput" placeholder="Пароль"
+             autocomplete="current-password" maxlength="128" class="input-main">
+    </div>
+    {% if error and error != 'PASSWORD_REQUIRED' %}
     <div class="error-msg">{{ error }}</div>
     {% endif %}
-    <button type="submit" class="btn-enter">Начать →</button>
+    <button type="submit" class="btn-enter">Войти →</button>
   </form>
 
+  <div class="toggle-extra" onclick="togglePass()" id="passToggle">+ У меня есть пароль</div>
+
   <div class="login-hint">
-    Никакого пароля. Просто твоё имя. Система запомнит тебя.<br><br>
+    Никакого пароля для новых не требуется. Просто имя.<br>
+    Пароль можно добавить позже в профиле.<br><br>
     <a href="/pitch" style="color:var(--indigo);text-decoration:none;font-size:12px">
       ✦ О проекте и краудфандинге →
     </a>
   </div>
 </div>
+
+<script>
+const passField = document.getElementById('passField');
+const passToggle = document.getElementById('passToggle');
+const usernameInput = document.getElementById('usernameInput');
+const passInput = document.getElementById('passInput');
+
+function showPass() {
+  passField.classList.remove('hidden');
+  passToggle.style.display = 'none';
+  setTimeout(() => passInput.focus(), 100);
+}
+
+function togglePass() {
+  showPass();
+}
+
+// Сервер сказал что пароль обязателен — раскрываем поле
+{% if error == 'PASSWORD_REQUIRED' %}
+showPass();
+document.querySelector('.error-msg, .field')?.insertAdjacentHTML?.('afterend', '');
+{% endif %}
+
+// Автодетект: проверяем есть ли пароль у этого юзера на blur
+let lastChecked = '';
+usernameInput.addEventListener('blur', async () => {
+  const v = usernameInput.value.trim().toLowerCase();
+  if (!v || v === lastChecked || v.length < 2) return;
+  lastChecked = v;
+  try {
+    const r = await fetch('/check_password', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: v})
+    });
+    const data = await r.json();
+    if (data.has_password) showPass();
+  } catch(e) {}
+});
+</script>
 </body>
 </html>

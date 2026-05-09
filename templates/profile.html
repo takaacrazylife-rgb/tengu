@@ -98,6 +98,41 @@
       <button class="p-btn" onclick="saveNotes()">Сохранить</button>
     </div>
 
+    <!-- Безопасность: email + пароль -->
+    <div class="profile-card profile-card-wide" style="border-color:rgba(220,38,38,.25);background:linear-gradient(180deg, rgba(220,38,38,.04), transparent);">
+      <div class="pcard-label">🔐 Защита аккаунта</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px;">
+        Добавь email и пароль чтобы прогресс не потерялся.<br>
+        {% if user_has_password %}
+        <span style="color:#22c55e">✓ Пароль установлен.</span> Можешь войти с любого устройства.
+        {% else %}
+        Сейчас твой аккаунт защищён только именем — кто угодно может войти под ним.
+        {% endif %}
+      </div>
+
+      {% if user_has_password %}
+      <div class="field" style="margin-bottom:10px;">
+        <input type="password" id="curPass" class="p-input" placeholder="Текущий пароль (для подтверждения)" autocomplete="current-password">
+      </div>
+      {% endif %}
+
+      <div class="field" style="margin-bottom:10px;">
+        <input type="email" id="emailInput" class="p-input" placeholder="Email (можно пропустить)"
+               value="{{ user_email or '' }}" autocomplete="email">
+      </div>
+
+      <div class="field" style="margin-bottom:10px;">
+        <input type="password" id="newPass" class="p-input"
+               placeholder="{% if user_has_password %}Новый пароль (оставь пустым чтобы не менять){% else %}Придумай пароль (минимум 6 символов){% endif %}"
+               autocomplete="new-password" minlength="6">
+      </div>
+
+      <button class="p-btn" onclick="saveSecurity()" style="background:var(--red);color:#fff;border-color:var(--red);">
+        {% if user_has_password %}Обновить{% else %}Установить{% endif %}
+      </button>
+      <div id="secStatus" style="margin-top:10px;font-size:13px;"></div>
+    </div>
+
   </div>
 
   <div id="save-status" class="save-status hidden">Сохранено ✓</div>
@@ -135,6 +170,44 @@ async function removeTag(key, val) {
 
 async function saveNotes() {
   await updateField('notes', document.getElementById('notes-ta').value);
+}
+
+async function saveSecurity() {
+  const curPassEl = document.getElementById('curPass');
+  const status = document.getElementById('secStatus');
+  const payload = {
+    current_password: curPassEl ? curPassEl.value : '',
+    email: document.getElementById('emailInput').value.trim(),
+    new_password: document.getElementById('newPass').value
+  };
+  if (!payload.email && !payload.new_password) {
+    status.textContent = 'Ничего не введено';
+    status.style.color = '#999';
+    return;
+  }
+  status.textContent = 'Сохраняю...';
+  status.style.color = 'var(--text3)';
+  try {
+    const r = await fetch('/profile/security', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    if (data.error) {
+      status.textContent = data.error;
+      status.style.color = '#ef4444';
+      return;
+    }
+    status.textContent = '✓ Сохранено. Теперь твой аккаунт защищён.';
+    status.style.color = '#22c55e';
+    document.getElementById('newPass').value = '';
+    if (curPassEl) curPassEl.value = '';
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    status.textContent = 'Ошибка соединения';
+    status.style.color = '#ef4444';
+  }
 }
 
 function showSaved() {

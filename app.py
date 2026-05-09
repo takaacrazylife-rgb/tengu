@@ -4,6 +4,8 @@ import json, threading
 from datetime import datetime, timedelta
 from database import init_db, get_or_create_user, get_profile, save_profile
 from database import get_active_session, create_session, get_session_messages, append_message, end_session, all_users
+from database import (get_user_by_id, get_user_by_username, get_user_by_email,
+                      set_password, set_email, verify_password, has_password)
 from llm import chat, extract_profile_update, is_ollama_ready, build_opening_message, generate_daily_question, generate_portrait
 
 app = Flask(__name__)
@@ -28,17 +30,61 @@ def login():
         return redirect(url_for('chat_page'))
     error = None
     if request.method == 'POST':
-        username = request.form.get('username', '').strip().lower()
-        if not username:
-            error = 'Введи имя'
-        elif len(username) < 2:
-            error = 'Имя слишком короткое'
+        identifier = request.form.get('username', '').strip().lower()
+        password = request.form.get('password', '')
+
+        if not identifier:
+            error = 'Введи имя или email'
+        elif len(identifier) < 2:
+            error = 'Слишком короткое'
         else:
-            user = get_or_create_user(username)
-            session['user_id'] = user['id']
-            session['username'] = username
-            return redirect(url_for('chat_page'))
+            # Находим существующего по email или username
+            user = None
+            if '@' in identifier:
+                user = get_user_by_email(identifier)
+                if not user:
+                    error = 'Email не зарегистрирован. Зарегистрируйся по имени.'
+            else:
+                user = get_user_by_username(identifier)
+
+            if user:
+                # Если у пользователя есть пароль — он обязателен
+                if has_password(user):
+                    if not password:
+                        error = 'PASSWORD_REQUIRED'
+                    elif not verify_password(user, password):
+                        error = 'Неверный пароль'
+                    else:
+                        session['user_id'] = user['id']
+                        session['username'] = user['username']
+                        return redirect(url_for('chat_page'))
+                else:
+                    # Старый аккаунт без пароля — пускаем
+                    session['user_id'] = user['id']
+                    session['username'] = user['username']
+                    return redirect(url_for('chat_page'))
+            elif not error:
+                # Новый пользователь — создаём
+                user = get_or_create_user(identifier)
+                if password and len(password) >= 6:
+                    set_password(user['id'], password)
+                session['user_id'] = user['id']
+                session['username'] = identifier
+                return redirect(url_for('chat_page'))
     return render_template('login.html', error=error)
+
+@app.route('/check_password', methods=['POST'])
+def check_password():
+    """Проверяет нужен ли пароль для конкретного юзера/email."""
+    data = request.get_json() or {}
+    identifier = (data.get('username') or '').strip().lower()
+    if not identifier:
+        return jsonify({'has_password': False, 'exists': False})
+    user = get_user_by_email(identifier) if '@' in identifier else get_user_by_username(identifier)
+    return jsonify({
+        'exists': bool(user),
+        'has_password': has_password(user) if user else False
+    })
 
 @app.route('/logout')
 def logout():
@@ -191,7 +237,13 @@ def profile_page():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     profile = get_profile(session['user_id'])
-    return render_template('profile.html', profile=profile, username=session['username'])
+    user = get_user_by_id(session['user_id'])
+    return render_template('profile.html',
+        profile=profile,
+        username=session['username'],
+        user_email=user.get('email') if user else None,
+        user_has_password=has_password(user)
+    )
 
 @app.route('/profile/save', methods=['POST'])
 def save_profile_route():
@@ -204,6 +256,40 @@ def save_profile_route():
         if key in data:
             profile[key] = data[key]
     save_profile(session['user_id'], profile)
+    return jsonify({'ok': True})
+
+@app.route('/profile/security', methods=['POST'])
+def profile_security():
+    if 'user_id' not in session:
+        return jsonify({'error': 'not logged in'}), 401
+    data = request.get_json() or {}
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)
+
+    new_email = (data.get('email') or '').strip().lower()
+    new_password = data.get('new_password') or ''
+    current_password = data.get('current_password') or ''
+
+    # Если у юзера уже есть пароль — нужно подтверждение
+    if has_password(user):
+        if not verify_password(user, current_password):
+            return jsonify({'error': 'Неверный текущий пароль'}), 400
+
+    # Email
+    if new_email:
+        if '@' not in new_email or '.' not in new_email.split('@')[-1]:
+            return jsonify({'error': 'Email не похож на email'}), 400
+        existing = get_user_by_email(new_email)
+        if existing and existing['id'] != user_id:
+            return jsonify({'error': 'Этот email уже занят другим пользователем'}), 400
+        set_email(user_id, new_email)
+
+    # Пароль
+    if new_password:
+        if len(new_password) < 6:
+            return jsonify({'error': 'Пароль должен быть минимум 6 символов'}), 400
+        set_password(user_id, new_password)
+
     return jsonify({'ok': True})
 
 # ── ADMIN ────────────────────────────────────────────────────────────────────
