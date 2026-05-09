@@ -25,9 +25,46 @@ def detect_toxic(messages: list) -> bool:
 OLLAMA_URL = "http://localhost:11434"
 MODEL = "llama3.1:8b"
 
-MODEL_NORMAL  = "claude-sonnet-4-6"
+MODEL_HAIKU   = "claude-haiku-4-5-20251001"
+MODEL_SONNET  = "claude-sonnet-4-6"
 MODEL_OPUS    = "claude-opus-4-7"
 MODEL_PROFILE = "claude-haiku-4-5-20251001"
+
+_COMPLEX_KEYWORDS = [
+    'диалектик', 'политэконом', 'противореч', 'отрицание отриц',
+    'докажи', 'разбери', 'проанализируй', 'критик',
+    'философ', 'маркс', 'ленин', 'гегел', 'энгельс',
+    'почему именно', 'объясни почему', 'в чём смысл',
+    'инвестиц', 'экономик', 'код', 'функция', 'алгоритм',
+    'история', 'война', 'политик'
+]
+
+def _pick_model(messages: list, profile: dict) -> str:
+    """Выбираем модель по сложности запроса. Экономим деньги на простых ответах."""
+    # Эскалация на Opus если поймали отказ
+    if _is_critical(messages):
+        return MODEL_OPUS
+
+    last_user = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
+    text_low = last_user.lower()
+
+    # Длинное вдумчивое сообщение → Sonnet
+    if len(last_user) > 250:
+        return MODEL_SONNET
+
+    # Ключевые слова сложных тем → Sonnet
+    if any(kw in text_low for kw in _COMPLEX_KEYWORDS):
+        return MODEL_SONNET
+
+    # Длинная история диалога — контекст важен → Sonnet
+    if len([m for m in messages if m['role'] == 'user']) > 10:
+        return MODEL_SONNET
+
+    # Глубокий стиль пользователя → Sonnet
+    if profile.get('depth') == 'deep':
+        return MODEL_SONNET
+
+    return MODEL_HAIKU
 
 _REFUSAL_SIGNALS = [
     'не могу продолжать', 'не могу обсуждать', 'я не могу помочь с',
@@ -213,13 +250,19 @@ def chat(messages: list, profile: dict, username: str) -> str:
 
     if api_key and _anthropic_module:
         try:
-            model = MODEL_OPUS if _is_critical(messages) else MODEL_NORMAL
+            model = _pick_model(messages, profile)
             client = _anthropic_module.Anthropic(api_key=api_key, timeout=60.0)
             claude_msgs = [{"role": m["role"], "content": m["content"]} for m in messages[-20:]]
+            # Prompt caching — системный промпт кешируется на 5 минут,
+            # повторные запросы в этом окне платят 10% от обычной цены за него
             resp = client.messages.create(
                 model=model,
                 max_tokens=1024,
-                system=system,
+                system=[{
+                    "type": "text",
+                    "text": system,
+                    "cache_control": {"type": "ephemeral"}
+                }],
                 messages=claude_msgs
             )
             return resp.content[0].text
